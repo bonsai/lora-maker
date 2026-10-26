@@ -1,0 +1,73 @@
+version: 1
+id: kaggle-integration
+name: "Kaggle dataset integration"
+purpose: "Kaggleへの登録・アップロード経路をMCP、公式API/CLI、CRXから選び、安全に実行する"
+execution:
+  mode: dry_run
+  require_explicit_enable: true
+  stop_on_error: true
+inputs:
+  required:
+    - dataset_zip
+    - dataset_slug
+    - visibility
+    - access_confirmation
+  visibility: [private, public]
+method_selection:
+  candidates:
+    - id: official_api_or_cli
+      default_priority: 1
+      use_when: "Kaggle公式API/CLIが必要な操作をサポートする"
+      requirements:
+        - "公式の認証手順を利用"
+        - "APIトークンは環境変数または安全な認証ストアから読み込む"
+      limitations:
+        - "対話ログや成果物へトークンを出力しない"
+    - id: kaggle_mcp
+      default_priority: 2
+      use_when: "信頼できるMCPサーバーが必要なKaggle操作を公開し、権限と入力を検証できる"
+      requirements:
+        - "接続先とツール一覧を事前確認"
+        - "書き込み操作の前にプレビューと承認"
+      limitations:
+        - "MCPは接続方式であり、Kaggle側のAPI制限を回避しない"
+    - id: browser_extension_crx
+      default_priority: 3
+      use_when: "公式API/CLIと承認済みMCPでは実現できないUI専用操作が必要"
+      requirements:
+        - "利用者の明示的なブラウザ操作と確認"
+        - "最小権限で実行"
+      limitations:
+        - "セッション情報・Cookie・トークンを抽出または保存しない"
+        - "DOM変更に弱いため、重要操作は結果を再確認"
+  selection_policy:
+    - "公式API/CLIを第一候補とする"
+    - "MCPは監査可能な操作ラッパーとして有効な場合に選ぶ"
+    - "CRXは最後の選択肢とし、ログインや公開範囲の変更を無人実行しない"
+workflow:
+  steps:
+    - validate_zip_and_manifest
+    - confirm_dataset_slug_and_visibility
+    - select_and_record_integration_method
+    - preview_remote_changes
+    - human_approval
+    - create_or_update_dataset
+    - verify_remote_dataset
+    - write_receipt
+outputs:
+  - kaggle-upload-plan.json
+  - kaggle-upload-receipt.json
+  - runs/events.jsonl
+human_approval:
+  required_before:
+    - upload
+    - dataset_update
+    - visibility_change
+    - training_job
+  default_visibility: private
+  automatic_training: false
+safety:
+  - "Never place credentials in YAML, source control, logs, or ZIP files"
+  - "Never make a dataset public without explicit approval"
+  - "Do not overwrite an existing dataset without a diff and confirmation"
+  - "Training is a separate workflow"
