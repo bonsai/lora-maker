@@ -1,13 +1,25 @@
 # LoRA Maker configuration
-# Dataset source: https://www.kaggle.com/datasets/tyokouchi/yamazaki-shishi-sdxl-dataset
-# Attach this dataset to the Kaggle notebook before training.
-#
-# Kaggle mount paths can vary. If this path does not exist, change it to the
-# actual directory shown under /kaggle/input in the notebook.
+# Attach the selected dataset(s) to the Kaggle notebook before training.
+# Kaggle mount paths may vary; verify actual paths under /kaggle/input.
 
-dataset:
-  id: tyokouchi/yamazaki-shishi-sdxl-dataset
-  path: /kaggle/input/datasets/tyokouchi/yamazaki-shishi-sdxl-dataset
+datasets:
+  - id: tyokouchi/yamazaki-shishi-sdxl-dataset
+    url: https://www.kaggle.com/datasets/tyokouchi/yamazaki-shishi-sdxl-dataset
+    path: /kaggle/input/datasets/tyokouchi/yamazaki-shishi-sdxl-dataset
+    instance_prompt: "a photo of yamazaki shishi"
+    enabled: true
+
+  - id: tyokouchi/hokusai-manga
+    url: https://www.kaggle.com/datasets/tyokouchi/hokusai-manga
+    path: /kaggle/input/datasets/tyokouchi/hokusai-manga
+    instance_prompt: "a Hokusai manga illustration"
+    enabled: true
+
+# The current Python script trains from one dataset path per run.
+# Set active_dataset to one of the IDs above when wiring settings.yml into the runner.
+active_dataset: tyokouchi/yamazaki-shishi-sdxl-dataset
+
+dataset_options:
   image_extensions:
     - .jpg
     - .jpeg
@@ -19,7 +31,6 @@ dataset:
 
 model:
   base_model: stabilityai/stable-diffusion-xl-base-1.0
-  instance_prompt: "a photo of yamazaki shishi"
 
 training:
   resolution: 1024
