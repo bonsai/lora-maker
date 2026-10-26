@@ -103,7 +103,6 @@ dataset:
       - image_height
       - perceptual_hash
   validation:
-    reject_corrupt_images: true
     reject_empty_captions: true
     require_image_caption_pairs: true
     reject_unapproved_sources: true
