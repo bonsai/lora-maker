@@ -29,6 +29,15 @@ python run_workflow.py kaggle-plan
 - `package`: requires a complete `data/approvals/dataset-approval.json`, including the `manifest_sha256` and `content_sha256` printed by `dataset --execute`. Re-hashes every image and caption, so edits after approval abort packaging. Also refuses to package when the images directory contains files absent from the manifest. Creates a ZIP without overwriting.
 - `kaggle-plan`: creates a local dry-run upload plan. It never connects to Kaggle or uploads.
 
+## Synthetic end-to-end check
+
+```powershell
+python tools/poc_synthetic_e2e.py          # temp sandbox, deleted afterwards
+python tools/poc_synthetic_e2e.py --keep   # keep the sandbox and print its path
+```
+
+Builds a throwaway sandbox in the system temp directory, generates rights-free synthetic videos, and writes sandbox-only approval fixtures to exercise preflight, `dataset --execute`, the overwrite guard, `package`, caption tampering, stale files, `--overwrite` cleanup, and ZIP contents. It refuses to place the sandbox inside the repository and never writes to the repository's `data/approvals`, `data/local-videos`, or `dist`. The fixtures are not rights approvals; this check is not a substitute for the real-media verification in #5.
+
 ## Approval records are validated, not just flagged
 
 `approved: true` alone is not enough. Records must also carry evidence references, review dates, and per-use scope. See `docs/RIGHTS_REVIEW.md` and `data/approvals/*.template.json`.
