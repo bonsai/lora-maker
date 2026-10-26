@@ -356,6 +356,18 @@ class DatasetIntegrityTests(unittest.TestCase):
         self.assertTrue(any(path.name == "x.png" for path in found))
 
 
+class WorkflowParityTests(unittest.TestCase):
+    def test_manifest_does_not_advertise_unimplemented_review_status(self):
+        config = rw.load_workflows()["03"]
+        self.assertNotIn("review_status", config["dataset"]["manifest"]["include"])
+
+    def test_acquisition_is_manual_local_only(self):
+        config = rw.load_workflows()["03"]
+        self.assertEqual(config["inputs"]["source_type"], "local_file")
+        self.assertEqual(config["inputs"]["acquisition"]["mode"], "manual_local_only")
+        self.assertEqual(config["inputs"]["acquisition"]["adapter"], "none")
+
+
 class OverwriteTests(unittest.TestCase):
     def setUp(self):
         self.config = rw.load_workflows()["03"]
