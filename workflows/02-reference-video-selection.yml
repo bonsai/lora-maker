@@ -1,63 +1,90 @@
 version: 1
-id: reference-video-selection
-name: "Reference video selection"
-purpose: "YouTube等のURLから候補7本を登録し、対象動画と処理範囲を人間が確定する"
-execution:
-  mode: dry_run
-  require_explicit_enable: true
-  stop_on_error: true
-inputs:
-  required:
-    - domain_decision
-    - candidates
-  source_policy:
-    source_type: url
-    accepted_hosts: [youtube.com, www.youtube.com, youtu.be]
-    expected_candidate_count: 7
-    download_before_approval: false
-  candidates:
-    type: array
-    min_items: 7
-    max_items: 7
-    item_fields:
-      id: string
-      source_url: string
-      title: string
-      creator_or_rights_holder: string
-      permission_status: [approved, restricted, unknown, rejected]
-      notes: string
-    initial_candidates:
-      - { id: video_01, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
-      - { id: video_02, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
-      - { id: video_03, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
-      - { id: video_04, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
-      - { id: video_05, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
-      - { id: video_06, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
-      - { id: video_07, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
-evaluation:
+workflow:
+  id: reference-video-discovery-selection
+  number: "02"
+  name: "Representative Video Discovery & Selection"
+  purpose: "ししさんの代表的な動画候補を広く集め、評価・選定して処理対象を確定する"
+  execution:
+    mode: dry_run
+    require_explicit_enable: true
+    stop_on_error: true
+
+upstream:
+  domain_decision: workflows/01-domain-decision.yml
+  require_domain_approval: true
+  required_artifact: domain-decision.json
+
+discovery:
+  sources: [youtube, user_provided_urls]
+  search_mode: manual_or_configured_search_adapter
+  query_templates:
+    - '"ヤマザキシシ"'
+    - '"ししさん" video'
+    - '"ヤマザキシシ" performance'
+    - '"ヤマザキシシ" interview OR appearance'
+  initial_candidate_target: 20
+  selected_video_target: 7
+  collect_metadata:
+    - video_id
+    - title
+    - channel_name
+    - source_url
+    - published_at
+    - duration_seconds
+    - description
+    - view_count_if_available
+    - license_metadata_if_available
+  do_not_download_during_discovery: true
+  no_search_result_is_automatically_approved: true
+
+candidate_schema:
+  required_fields: [id, source_url, title, creator_or_rights_holder, subject_match, permission_status]
+  fields:
+    id: string
+    source_url: string
+    title: string
+    channel_name: string
+    creator_or_rights_holder: string
+    published_at: string
+    duration_seconds: integer
+    view_count: integer
+    subject_match: [confirmed, likely, uncertain, not_match]
+    permission_status: [approved, restricted, unknown, rejected]
+    candidate_status: [unreviewed, shortlisted, selected, rejected]
+    notes: string
+
+representativeness:
+  principle: "人気順だけでなく、本人らしさ・代表的な活動・見た目の一貫性・映像品質・内容の多様性を組み合わせて評価する"
   criteria:
-    - { id: subject_match, weight: 5, scale: [1, 5] }
-    - { id: visibility, weight: 4, scale: [1, 5], description: "対象が十分な大きさで見え、遮蔽が少ない" }
-    - { id: motion_coverage, weight: 4, scale: [1, 5], description: "必要なポーズ・動作の種類を含む" }
-    - { id: image_quality, weight: 3, scale: [1, 5] }
-    - { id: camera_stability, weight: 2, scale: [1, 5] }
-    - { id: source_reliability, weight: 5, scale: [1, 5] }
-selection_rules:
-  - "URLと出典を記録し、重複候補を検出する"
-  - "permission_status must be approved before download or processing"
-  - "unknown, restricted, and rejected candidates cannot be auto-selected"
-  - "scores rank candidates but never replace human approval"
-  - "record timestamps and excluded segments where relevant"
+    - { id: identity_confidence, weight: 5, scale: [1, 5], description: "出典情報から対象がししさんであることを確認できる" }
+    - { id: iconicity, weight: 5, scale: [1, 5], description: "代表的な姿・活動・場面を示す" }
+    - { id: visual_clarity, weight: 4, scale: [1, 5], description: "学習対象の特徴が十分に見える" }
+    - { id: visual_diversity, weight: 4, scale: [1, 5], description: "他候補と異なる角度、衣装、表情、ポーズを含む" }
+    - { id: image_quality, weight: 3, scale: [1, 5], description: "解像度、圧縮、照明、ブレ" }
+    - { id: source_reliability, weight: 5, scale: [1, 5], description: "公式・本人・権利者など出典の信頼性" }
+    - { id: engagement_signal, weight: 1, scale: [1, 5], description: "再生数等の公開指標。単独で採否を決めない" }
+  decision_rules:
+    - "Keep evidence for identity and source attribution"
+    - "Engagement metrics are weak signals, not proof of representativeness"
+    - "Unknown identity or permission requires human review"
+    - "Permission status is a separate gate from representativeness score"
+    - "Only approved candidates can be selected for processing"
+
 outputs:
   - reference-candidates.json
   - reference-review.csv
   - selected-videos.yml
   - selection-record.json
+
 human_approval:
   required: true
-  required_fields: [selected_video_ids, approved_use, excluded_time_ranges]
-next_workflow: workflows/yamazaki-shishi-sdxl.yml
+  required_fields: [selected_video_ids, reason_each_video_is_representative, approved_use, excluded_time_ranges]
+  reject_action: stop
+
+next_workflow: workflows/03-dataset-preparation.yml
+
 safety:
+  - "Public visibility does not imply permission to download or use for training"
   - "Do not bypass access controls or platform restrictions"
-  - "A publicly viewable video is not automatically licensed for dataset creation"
-  - "Use official or otherwise permitted access methods; do not circumvent download restrictions"
+  - "Do not download candidate videos until use terms and acquisition method are approved"
+  - "Do not infer identity from appearance alone"
