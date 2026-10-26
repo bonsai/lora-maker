@@ -65,10 +65,16 @@
 
 ## 4. dataset-approval.json
 
-`dataset --execute` の実行後に表示される `manifest.json sha256` を `manifest_sha256` に記入する。
-manifest が変わればハッシュが変わり、`package` は失敗する（承認後の差し替え防止）。
+`dataset --execute` の実行後に表示される `manifest.json sha256` を `manifest_sha256` に、
+`dataset content sha256` を `content_sha256` に記入する。
+画像または caption を1枚でも編集すると content hash が変わり、`package` は失敗する（承認後の差し替え防止）。
 
 `captions_reviewed` と `contact_sheet_reviewed` は、実際に目視確認した時だけ `true`。
+
+## 上書き
+
+`dataset --execute` は既存の画像・caption・manifest・contact sheet があると停止する。
+内容を確認したうえで作り直す場合だけ `--overwrite` を付ける（`--execute` と併用必須）。
 
 ## 実行順
 

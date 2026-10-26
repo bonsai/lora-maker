@@ -90,6 +90,53 @@ def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def content_digest(rows: list[dict]) -> str:
+    """Deterministic digest over image/caption hashes so approved content can be re-checked."""
+    lines = []
+    for row in sorted(rows, key=lambda item: str(item.get("image_path", ""))):
+        lines.append(
+            "|".join(
+                str(row.get(field, ""))
+                for field in ("image_path", "image_sha256", "caption_path", "caption_sha256")
+            )
+        )
+    return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
+
+
+def dataset_integrity_problems(root: Path, rows: list[dict], manifest: dict) -> list[str]:
+    """Detect images/captions edited after the manifest was written or approved."""
+    problems: list[str] = []
+    for row in rows:
+        for path_key, hash_key in (("image_path", "image_sha256"), ("caption_path", "caption_sha256")):
+            path = root / str(row.get(path_key, ""))
+            if not path.is_file():
+                problems.append(f"missing {path_key}: {rel(path, root)}")
+                continue
+            digest = str(row.get(hash_key) or "")
+            if not SHA256_PATTERN.match(digest):
+                problems.append(f"{hash_key} is missing for {rel(path, root)}")
+            elif sha256_file(path) != digest:
+                problems.append(f"{path_key} changed after extraction: {rel(path, root)}")
+    if content_digest(rows) != manifest.get("content_sha256"):
+        problems.append("dataset content digest does not match manifest content_sha256")
+    return problems
+
+
+def existing_dataset_outputs(root: Path, config: dict) -> list[Path]:
+    dataset_root = root / config["dataset"]["output_dir"]
+    targets = [
+        dataset_root / "README.md",
+        dataset_root / Path(config["dataset"]["manifest"]["path"]).name,
+        root / config["dataset"]["review"]["contact_sheet_path"],
+    ]
+    images = dataset_root / "images"
+    if images.is_dir():
+        targets.extend(
+            sorted(path for path in images.iterdir() if path.is_file() and path.suffix.lower() in {".png", ".txt"})
+        )
+    return [path for path in targets if path.is_file()]
+
+
 def log_event(name: str, status: str, **details) -> None:
     RUNS.mkdir(parents=True, exist_ok=True)
     row = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "event": name, "status": status, **details}
@@ -107,7 +154,13 @@ def valid_date(value) -> bool:
     if isinstance(value, datetime.date):
         # YAML turns an unquoted 2026-10-01 into a date object.
         return True
-    return isinstance(value, str) and bool(DATE_PATTERN.match(value.strip()))
+    if not isinstance(value, str) or not DATE_PATTERN.match(value.strip()):
+        return False
+    try:
+        datetime.date.fromisoformat(value.strip())
+    except ValueError:
+        return False
+    return True
 
 
 # ------------------------------------------------------------ approval checks
@@ -191,9 +244,11 @@ def validate_selection_record(record: dict) -> list[str]:
     if record.get("approved") is not True:
         problems.append("approved is not true")
     ids = record.get("selected_video_ids")
-    clean_ids = [str(value) for value in ids if filled(value)] if isinstance(ids, list) else []
+    clean_ids = [str(value).strip() for value in ids if filled(value)] if isinstance(ids, list) else []
     if not clean_ids:
         problems.append("selected_video_ids must list the approved videos")
+    elif len(clean_ids) != len(set(clean_ids)):
+        problems.append("selected_video_ids contains duplicates")
     uses = record.get("approved_uses")
     missing = [use for use in REQUIRED_VIDEO_USES if not (isinstance(uses, list) and use in uses)]
     if missing:
@@ -203,6 +258,13 @@ def validate_selection_record(record: dict) -> list[str]:
     reasons = record.get("reason_each_video_is_representative")
     if not isinstance(reasons, dict) or not reasons:
         problems.append("reason_each_video_is_representative must map each selected id to a reason")
+    elif clean_ids:
+        extra = sorted(set(reasons) - set(clean_ids))
+        if extra:
+            problems.append(
+                "reason_each_video_is_representative includes ids not in selected_video_ids: "
+                + ", ".join(extra)
+            )
     return problems
 
 
@@ -259,6 +321,9 @@ def validate_dataset_approval(record: dict) -> list[str]:
     digest = record.get("manifest_sha256")
     if not (isinstance(digest, str) and SHA256_PATTERN.match(digest)):
         problems.append("manifest_sha256 must be the sha256 of the reviewed manifest.json")
+    content = record.get("content_sha256")
+    if not (isinstance(content, str) and SHA256_PATTERN.match(content)):
+        problems.append("content_sha256 must be the dataset content digest shown by dataset --execute")
     return problems
 
 
@@ -317,6 +382,17 @@ def preflight(
         blockers.extend(problems)
     else:
         blockers.extend(f"{rel(manifest_path, root)}: {item}" for item in validate_videos(videos, approved_ids))
+        manifest_ids = {
+            str(row.get("video_id") or "").strip() for row in videos if isinstance(row, dict)
+        }
+        manifest_ids.discard("")
+        if approved_ids:
+            absent = sorted(approved_ids - manifest_ids)
+            if absent:
+                blockers.append(
+                    f"{rel(selection_path, root)}: approved video ids missing from "
+                    f"{rel(manifest_path, root)}: {', '.join(absent)}"
+                )
         if target_count is not None and len(videos) != target_count:
             warnings.append(
                 f"{rel(manifest_path, root)}: {len(videos)} videos selected; workflow target is {target_count} "
@@ -402,12 +478,19 @@ def extract(args) -> int:
     target = config["inputs"].get("target_video_count")
 
     blockers, warnings = preflight(ROOT, manifest_rel, target)
+    if args.overwrite and not args.execute:
+        raise ValueError("--overwrite requires --execute")
+    existing = existing_dataset_outputs(ROOT, config)
     if not args.execute:
         print("DRY RUN: no local video opened, no frames extracted, no images written.")
         if warnings:
             print("Warnings:")
             for item in warnings:
                 print(f"  - {item}")
+        if existing:
+            print(
+                f"Note: {len(existing)} existing dataset output(s) would block --execute without --overwrite."
+            )
         if blockers:
             shown = blockers[: args.limit]
             print(f"Blocked pending human review ({len(blockers)} unresolved):")
@@ -423,6 +506,16 @@ def extract(args) -> int:
         raise RuntimeError(
             "Refusing to execute; preflight is unresolved:\n  - " + "\n  - ".join(blockers[:20])
         )
+
+    if existing and not args.overwrite:
+        shown = ", ".join(rel(path) for path in existing[:5])
+        raise RuntimeError(
+            f"Refusing to overwrite {len(existing)} existing dataset output(s): {shown}"
+            + (" ..." if len(existing) > 5 else "")
+            + ". Review them, then re-run with --overwrite."
+        )
+    if existing:
+        log_event("dataset_overwrite_confirmed", "warning", count=len(existing))
 
     import cv2
 
@@ -489,9 +582,13 @@ def extract(args) -> int:
     for record in records:
         image = ROOT / record["image_path"]
         caption = caption_template.format(trigger_token=config["captions"]["trigger_token"])
-        image.with_suffix(".txt").write_text(caption + "\n", encoding="utf-8")
+        caption_path = image.with_suffix(".txt")
+        caption_path.write_text(caption + "\n", encoding="utf-8")
+        record["image_sha256"] = sha256_file(image)
+        record["caption_sha256"] = sha256_file(caption_path)
     dataset_root = ROOT / config["dataset"]["output_dir"]
     manifest = dataset_root / Path(config["dataset"]["manifest"]["path"]).name
+    content = content_digest(records)
     write_json(
         manifest,
         {
@@ -499,6 +596,7 @@ def extract(args) -> int:
             "intended_use": config["project"]["intended_use"],
             "publication_scope": config["project"]["publication_scope"],
             "visibility": config["package"]["intended_visibility"],
+            "content_sha256": content,
             "images": records,
         },
     )
@@ -510,11 +608,13 @@ def extract(args) -> int:
     )
     make_contact_sheet(records, ROOT / config["dataset"]["review"]["contact_sheet_path"])
     digest = sha256_file(manifest)
-    log_event("dataset_manifest_written", "success", path=rel(manifest), sha256=digest, images=len(records))
+    log_event("dataset_manifest_written", "success", path=rel(manifest), sha256=digest, content_sha256=content, images=len(records))
     print(f"Wrote {len(records)} images. Review captions and contact sheet before packaging.")
     print("Captions are placeholders, not verified descriptions.")
     print(f"manifest.json sha256: {digest}")
-    print("Copy that hash into data/approvals/dataset-approval.json as manifest_sha256 after review.")
+    print(f"dataset content sha256: {content}")
+    print("After review, copy both hashes into data/approvals/dataset-approval.json")
+    print("(manifest_sha256 and content_sha256).")
     return 0
 
 
@@ -559,7 +659,8 @@ def package(_args) -> int:
     if sha256_file(manifest) != record["manifest_sha256"]:
         raise RuntimeError("manifest.json changed after approval; re-review and update dataset-approval.json")
 
-    rows = json.loads(manifest.read_text(encoding="utf-8")).get("images", [])
+    manifest_doc = json.loads(manifest.read_text(encoding="utf-8"))
+    rows = manifest_doc.get("images", [])
     if not rows:
         raise RuntimeError("manifest.json contains no images")
     for row in rows:
@@ -567,6 +668,14 @@ def package(_args) -> int:
             path = ROOT / row[key]
             if not path.is_file() or (key == "caption_path" and not path.read_text(encoding="utf-8").strip()):
                 raise RuntimeError(f"Missing image/caption or empty caption: {rel(path)}")
+    integrity = dataset_integrity_problems(ROOT, rows, manifest_doc)
+    if integrity:
+        raise RuntimeError(
+            "Dataset content changed after extraction; re-run dataset --execute and re-approve:\n  - "
+            + "\n  - ".join(integrity[:20])
+        )
+    if record["content_sha256"] != manifest_doc.get("content_sha256"):
+        raise RuntimeError("dataset-approval.json content_sha256 does not match the reviewed dataset; re-approve")
 
     output = ROOT / config["package"]["output_dir"] / config["package"]["filename"]
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -629,6 +738,11 @@ def main() -> int:
 
     ds = sub.add_parser("dataset", help="Plan or locally extract frames from approved videos")
     ds.add_argument("--execute", action="store_true", help="Write local images; approval records required")
+    ds.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace existing dataset outputs; requires --execute and explicit review first",
+    )
     ds.add_argument("--limit", type=int, default=40, help="Maximum blockers to print in dry-run")
     ds.set_defaults(func=extract)
 
