@@ -76,6 +76,10 @@
 `dataset --execute` は既存の画像・caption・manifest・contact sheet があると停止する。
 内容を確認したうえで作り直す場合だけ `--overwrite` を付ける（`--execute` と併用必須）。
 
+`--overwrite` は images ディレクトリ内の既存 `.png` / `.txt` を削除してから再生成する。
+`package` は manifest に載っていないファイルが images に残っていると停止するため、
+出力ディレクトリと manifest が常に一致する。
+
 ## 実行順
 
 ```powershell
