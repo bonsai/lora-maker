@@ -1,7 +1,7 @@
 version: 1
 id: reference-video-selection
 name: "Reference video selection"
-purpose: "お手本動画の候補を比較し、処理対象の動画セットを人間が確定する"
+purpose: "YouTube等のURLから候補7本を登録し、対象動画と処理範囲を人間が確定する"
 execution:
   mode: dry_run
   require_explicit_enable: true
@@ -10,8 +10,15 @@ inputs:
   required:
     - domain_decision
     - candidates
+  source_policy:
+    source_type: url
+    accepted_hosts: [youtube.com, www.youtube.com, youtu.be]
+    expected_candidate_count: 7
+    download_before_approval: false
   candidates:
     type: array
+    min_items: 7
+    max_items: 7
     item_fields:
       id: string
       source_url: string
@@ -19,30 +26,25 @@ inputs:
       creator_or_rights_holder: string
       permission_status: [approved, restricted, unknown, rejected]
       notes: string
+    initial_candidates:
+      - { id: video_01, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
+      - { id: video_02, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
+      - { id: video_03, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
+      - { id: video_04, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
+      - { id: video_05, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
+      - { id: video_06, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
+      - { id: video_07, source_url: null, title: null, creator_or_rights_holder: unknown, permission_status: unknown, notes: "" }
 evaluation:
   criteria:
-    - id: subject_match
-      weight: 5
-      scale: [1, 5]
-    - id: visibility
-      weight: 4
-      description: "対象が十分な大きさで見え、遮蔽が少ない"
-      scale: [1, 5]
-    - id: motion_coverage
-      weight: 4
-      description: "必要なポーズ・動作の種類を含む"
-      scale: [1, 5]
-    - id: image_quality
-      weight: 3
-      scale: [1, 5]
-    - id: camera_stability
-      weight: 2
-      scale: [1, 5]
-    - id: source_reliability
-      weight: 5
-      scale: [1, 5]
+    - { id: subject_match, weight: 5, scale: [1, 5] }
+    - { id: visibility, weight: 4, scale: [1, 5], description: "対象が十分な大きさで見え、遮蔽が少ない" }
+    - { id: motion_coverage, weight: 4, scale: [1, 5], description: "必要なポーズ・動作の種類を含む" }
+    - { id: image_quality, weight: 3, scale: [1, 5] }
+    - { id: camera_stability, weight: 2, scale: [1, 5] }
+    - { id: source_reliability, weight: 5, scale: [1, 5] }
 selection_rules:
-  - "permission_status must be approved before processing"
+  - "URLと出典を記録し、重複候補を検出する"
+  - "permission_status must be approved before download or processing"
   - "unknown, restricted, and rejected candidates cannot be auto-selected"
   - "scores rank candidates but never replace human approval"
   - "record timestamps and excluded segments where relevant"
@@ -53,11 +55,9 @@ outputs:
   - selection-record.json
 human_approval:
   required: true
-  required_fields:
-    - selected_video_ids
-    - approved_use
-    - excluded_time_ranges
+  required_fields: [selected_video_ids, approved_use, excluded_time_ranges]
 next_workflow: workflows/yamazaki-shishi-sdxl.yml
 safety:
   - "Do not bypass access controls or platform restrictions"
-  - "Do not treat a publicly viewable video as automatically licensed for dataset creation"
+  - "A publicly viewable video is not automatically licensed for dataset creation"
+  - "Use official or otherwise permitted access methods; do not circumvent download restrictions"
