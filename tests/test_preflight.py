@@ -83,6 +83,7 @@ def dataset_record(**overrides) -> dict:
         "captions_reviewed": True,
         "contact_sheet_reviewed": True,
         "manifest_sha256": "a" * 64,
+        "content_sha256": "b" * 64,
         "reviewed_by": "bons",
         "reviewed_at": "2026-10-01",
         "notes": "",
@@ -118,6 +119,22 @@ class TemplateTests(unittest.TestCase):
             problems = validator(record)
             self.assertTrue(problems, "template must not validate as an approval")
             self.assertIn("approved is not true", problems)
+
+
+class DateTests(unittest.TestCase):
+    def test_rejects_impossible_dates(self):
+        for value in ("2026-02-31", "2026-13-01", "2026-00-10", "2026-2-1", "not-a-date", ""):
+            self.assertFalse(rw.valid_date(value), value)
+
+    def test_accepts_real_dates(self):
+        for value in ("2024-02-29", "2026-10-01"):
+            self.assertTrue(rw.valid_date(value), value)
+
+    def test_accepts_yaml_date_objects(self):
+        import datetime
+
+        self.assertTrue(rw.valid_date(datetime.date(2026, 10, 1)))
+        self.assertFalse(rw.valid_date(datetime.datetime(2026, 10, 1, 12, 0)))
 
 
 class DomainDecisionTests(unittest.TestCase):
@@ -161,6 +178,21 @@ class SelectionTests(unittest.TestCase):
         problems = rw.validate_selection_record(selection_record(excluded_time_ranges=None))
         self.assertTrue(any("excluded_time_ranges" in item for item in problems))
 
+    def test_duplicate_ids_are_blocked(self):
+        problems = rw.validate_selection_record(
+            selection_record(
+                selected_video_ids=["vid01", "vid01"],
+                reason_each_video_is_representative={"vid01": "reason"},
+            )
+        )
+        self.assertTrue(any("duplicates" in item for item in problems))
+
+    def test_reason_for_unselected_id_is_blocked(self):
+        problems = rw.validate_selection_record(
+            selection_record(reason_each_video_is_representative={"vid01": "reason", "vid99": "stale"})
+        )
+        self.assertTrue(any("not in selected_video_ids" in item for item in problems))
+
 
 class VideoManifestTests(unittest.TestCase):
     def test_valid_entry_passes(self):
@@ -199,6 +231,10 @@ class DatasetApprovalTests(unittest.TestCase):
         problems = rw.validate_dataset_approval(dataset_record(manifest_sha256=""))
         self.assertTrue(any("manifest_sha256" in item for item in problems))
 
+    def test_content_hash_is_required(self):
+        problems = rw.validate_dataset_approval(dataset_record(content_sha256=""))
+        self.assertTrue(any("content_sha256" in item for item in problems))
+
 
 class PreflightTests(unittest.TestCase):
     def test_missing_artifacts_are_all_reported(self):
@@ -231,6 +267,18 @@ class PreflightTests(unittest.TestCase):
             blockers, _ = rw.preflight(root)
         self.assertTrue(any("not covered by approval-record.json" in item for item in blockers))
 
+    def test_approved_id_missing_from_manifest_is_blocked(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            selection = selection_record(
+                selected_video_ids=["vid01", "vid02"],
+                reason_each_video_is_representative={"vid01": "a", "vid02": "b"},
+            )
+            write_fixture(root, domain_record(), selection, [video_entry()])
+            blockers, _ = rw.preflight(root)
+        self.assertTrue(any("approved video ids missing from" in item for item in blockers))
+        self.assertTrue(any("vid02" in item for item in blockers))
+
     def test_malformed_json_is_blocked(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -246,6 +294,66 @@ class PreflightTests(unittest.TestCase):
             blockers, warnings = rw.preflight(root, target_count=7)
         self.assertEqual(blockers, [])
         self.assertTrue(any("target is 7" in item for item in warnings))
+
+
+class DatasetIntegrityTests(unittest.TestCase):
+    def make_dataset(self, root: Path):
+        images = root / "data/dataset/images"
+        images.mkdir(parents=True, exist_ok=True)
+        image = images / "vid01_000000.png"
+        image.write_bytes(b"\x89PNG\r\n\x1a\n")
+        caption = images / "vid01_000000.txt"
+        caption.write_text("placeholder caption\n", encoding="utf-8")
+        row = {
+            "image_path": "data/dataset/images/vid01_000000.png",
+            "caption_path": "data/dataset/images/vid01_000000.txt",
+            "image_sha256": rw.sha256_file(image),
+            "caption_sha256": rw.sha256_file(caption),
+        }
+        manifest = {"content_sha256": rw.content_digest([row]), "images": [row]}
+        return caption, row, manifest
+
+    def test_untouched_dataset_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, row, manifest = self.make_dataset(root)
+            self.assertEqual(rw.dataset_integrity_problems(root, [row], manifest), [])
+
+    def test_edited_caption_is_detected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            caption, row, manifest = self.make_dataset(root)
+            caption.write_text("edited after approval\n", encoding="utf-8")
+            problems = rw.dataset_integrity_problems(root, [row], manifest)
+        self.assertTrue(any("caption_path changed after extraction" in item for item in problems))
+
+    def test_manifest_content_digest_mismatch_is_detected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, row, manifest = self.make_dataset(root)
+            manifest = dict(manifest, content_sha256="d" * 64)
+            problems = rw.dataset_integrity_problems(root, [row], manifest)
+        self.assertTrue(any("content digest" in item for item in problems))
+
+    def test_content_digest_tracks_caption_hash(self):
+        row = {
+            "image_path": "i",
+            "image_sha256": "a" * 64,
+            "caption_path": "c",
+            "caption_sha256": "b" * 64,
+        }
+        changed = dict(row, caption_sha256="c" * 64)
+        self.assertNotEqual(rw.content_digest([row]), rw.content_digest([changed]))
+
+    def test_existing_outputs_are_detected(self):
+        config = rw.load_workflows()["03"]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.assertEqual(rw.existing_dataset_outputs(root, config), [])
+            (root / "data/dataset/images").mkdir(parents=True)
+            (root / "data/dataset/images/x.png").write_bytes(b"x")
+            found = rw.existing_dataset_outputs(root, config)
+        self.assertTrue(any(path.name == "x.png" for path in found))
 
 
 if __name__ == "__main__":
