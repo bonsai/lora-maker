@@ -1,0 +1,43 @@
+# LoRA Maker configuration
+# Dataset source: https://www.kaggle.com/datasets/tyokouchi/yamazaki-shishi-sdxl-dataset
+# Attach this dataset to the Kaggle notebook before training.
+#
+# Kaggle mount paths can vary. If this path does not exist, change it to the
+# actual directory shown under /kaggle/input in the notebook.
+
+dataset:
+  id: tyokouchi/yamazaki-shishi-sdxl-dataset
+  path: /kaggle/input/datasets/tyokouchi/yamazaki-shishi-sdxl-dataset
+  image_extensions:
+    - .jpg
+    - .jpeg
+    - .png
+    - .webp
+    - .bmp
+    - .tif
+    - .tiff
+
+model:
+  base_model: stabilityai/stable-diffusion-xl-base-1.0
+  instance_prompt: "a photo of yamazaki shishi"
+
+training:
+  resolution: 1024
+  rank: 16
+  max_train_steps: 1000
+  learning_rate: 0.0001
+  train_batch_size: 1
+  gradient_accumulation_steps: 1
+  checkpointing_steps: 500
+  gradient_checkpointing: true
+
+runtime:
+  output_dir: /kaggle/working/lora-maker-output
+  work_dir: /kaggle/working/lora-maker
+  require_cuda: true
+  install_dependencies: true
+  internet_required: true
+
+# Suggested quick smoke-test settings before a longer training run:
+# training:
+#   max_train_steps: 20
