@@ -1,0 +1,52 @@
+version: 1
+id: domain-subject-decision
+name: "Domain and LoRA subject decision"
+purpose: "決定する: 誰・何を対象にLoRAを作り、どの権利・公開範囲で成果物を扱うか"
+execution:
+  mode: dry_run
+  require_explicit_enable: true
+  stop_on_error: true
+inputs:
+  required:
+    - project_name
+    - subject_name
+    - subject_type
+    - intended_use
+    - publication_scope
+  fields:
+    project_name: { type: string }
+    subject_name: { type: string, description: "人物・キャラクター・作品・ブランド等の対象" }
+    subject_type: { enum: [original_character, fictional_character, public_figure, private_person, style, other] }
+    source_urls: { type: array, items: string, default: [] }
+    rights_holder: { type: string, default: unknown }
+    permission_evidence: { type: array, items: string, default: [] }
+    intended_use: { enum: [private_experiment, research, internal_production, public_release, commercial] }
+    publication_scope: { enum: [local_only, private_dataset, public_dataset, public_model, commercial_distribution] }
+    trigger_token: { type: string }
+    base_model: { type: string, default: "stabilityai/stable-diffusion-xl-base-1.0" }
+decisions:
+  gates:
+    - id: subject_defined
+      pass_when: "subject_name and subject_type are explicit"
+    - id: source_traceable
+      pass_when: "each planned reference source has a recorded URL or local provenance"
+    - id: rights_review
+      pass_when: "rights and applicable platform terms have been reviewed for intended use"
+    - id: publication_approved
+      pass_when: "publication_scope is explicitly approved by a human"
+  blocked_conditions:
+    - "Unknown permission is not treated as permission"
+    - "Public release or commercial use cannot proceed while rights_review is pending"
+outputs:
+  - domain-decision.json
+  - domain-decision.md
+  - approval-record.json
+human_approval:
+  required: true
+  approver: project_owner
+  reject_action: stop
+next_workflow: workflows/02-reference-video-selection.yml
+safety:
+  - "Record evidence and uncertainty; do not infer ownership from a name or URL alone"
+  - "Do not download or process source media before approval"
+  - "Do not publish datasets or trained weights automatically"
