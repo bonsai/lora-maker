@@ -113,9 +113,35 @@ def extract(args) -> int:
     import cv2
     cfgs = load_workflows()
     cfg = cfgs["03"]
-    approval(ROOT / "data/approvals/domain-decision.json", "domain/source")
-    approval(ROOT / "data/approvals/approval-record.json", "video selection")
     manifest_path = ROOT / cfg["inputs"]["selected_manifest"]
+    approval_paths = [
+        (ROOT / "data/approvals/domain-decision.json", "domain/source"),
+        (ROOT / "data/approvals/approval-record.json", "video selection"),
+    ]
+
+    # A dry-run is a plan only: report blockers without opening media or
+    # requiring users to fabricate approval records to inspect the workflow.
+    if not args.execute:
+        blockers = [f"approval missing: {p.relative_to(ROOT)} ({purpose})"
+                    for p, purpose in approval_paths if not p.is_file()]
+        if not manifest_path.is_file():
+            blockers.append(f"selected video manifest missing: {manifest_path.relative_to(ROOT)}")
+        else:
+            try:
+                load_videos(manifest_path)
+            except (ValueError, FileNotFoundError) as exc:
+                blockers.append(f"selected video manifest needs review: {exc}")
+        print("DRY RUN: no local video opened, no frames extracted, no images written.")
+        if blockers:
+            print("Blocked pending human review:")
+            for item in blockers:
+                print(f"  - {item}")
+        else:
+            print("Preflight passed. Add --execute only after reviewing evidence and approvals.")
+        return 0
+
+    for path, purpose in approval_paths:
+        approval(path, purpose)
     videos = load_videos(manifest_path)
     interval = float(cfg["frames"]["extraction"]["interval_seconds"])
     threshold = int(cfg["frames"]["deduplication"]["max_hamming_distance"])
@@ -167,17 +193,12 @@ def extract(args) -> int:
             frame_no += 1
         cap.release()
 
-    if not args.execute:
-        print(f"DRY RUN: {len(videos)} local videos, {len(records)} unique candidate frames.")
-        print("No images written. Add --execute only after reviewing approvals.")
-        write_json(RUNS / "dry-run-summary.json", {"mode": "dry_run", "videos": len(videos), "candidate_frames": len(records)})
-        return 0
-
     for record in records:
         image = ROOT / record["image_path"]
         caption = cfg["captions"]["initial_template"].format(trigger_token=cfg["captions"]["trigger_token"])
         image.with_suffix(".txt").write_text(caption + "\n", encoding="utf-8")
-    manifest = ROOT / cfg["dataset"]["manifest"]["path"]
+    dataset_root = ROOT / cfg["dataset"]["output_dir"]
+    manifest = dataset_root / Path(cfg["dataset"]["manifest"]["path"]).name
     write_json(manifest, {"project": cfg["project"]["name"], "images": records})
     readme = ROOT / cfg["dataset"]["output_dir"] / "README.md"
     readme.write_text(
