@@ -34,7 +34,7 @@ upstream:
 
 inputs:
   selected_manifest: selected-videos.yml
-  source_type: url
+  source_type: local_file
   target_video_count: 7
   allow_count_change_with_approval: true
   validation:
@@ -45,16 +45,17 @@ inputs:
     require_human_approval: true
     download_before_approval: false
   acquisition:
-    adapter: configurable
-    mode: permitted_access_only
+    adapter: none
+    mode: manual_local_only
+    download_before_approval: false
     obey_platform_terms: true
     never_bypass_access_controls: true
-    cache_dir: data/source-cache
+    source_dir: data/local-videos
     keep_source_video_out_of_dataset_zip: true
 
 frames:
   extractor: opencv
-  output_dir: data/frames
+  output_dir: data/dataset/images
   image_format: png
   extraction:
     method: interval
@@ -64,16 +65,13 @@ frames:
   image:
     preserve_aspect_ratio: true
     resize: false
-    max_dimension: 1024
   deduplication:
     enabled: true
     method: perceptual_hash
     max_hamming_distance: 5
     compare_across_videos: true
-  quality_filters:
-    reject_corrupt_frames: true
-    flag_blurry_frames_for_review: true
-    flag_tiny_or_occluded_subject: true
+  quality_review:
+    method: manual_contact_sheet_review
     automatic_delete: false
 
 captions:
@@ -104,12 +102,10 @@ dataset:
       - image_width
       - image_height
       - perceptual_hash
-      - review_status
   validation:
     reject_corrupt_images: true
     reject_empty_captions: true
     require_image_caption_pairs: true
-    report_duplicate_images: true
     reject_unapproved_sources: true
   review:
     contact_sheet_path: data/review/contact-sheet.jpg
@@ -145,15 +141,9 @@ steps:
   - id: validate_selected_videos
     action: validate_selected_video_manifest
     depends_on: [validate_domain_approval]
-  - id: approve_acquisition
-    action: wait_for_human_approval
-    depends_on: [validate_selected_videos]
-  - id: acquire_videos
-    action: acquire_videos_via_permitted_adapter
-    depends_on: [approve_acquisition]
   - id: extract_png_frames
     action: extract_video_frames_with_opencv
-    depends_on: [acquire_videos]
+    depends_on: [validate_selected_videos]
   - id: deduplicate_frames
     action: deduplicate_images
     depends_on: [extract_png_frames]
