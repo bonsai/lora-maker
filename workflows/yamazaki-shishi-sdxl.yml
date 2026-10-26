@@ -1,0 +1,165 @@
+# Yamazaki Shishi SDXL LoRA dataset workflow
+# Source of truth: YAML. Python runner implementation follows in a separate step.
+# This workflow prepares a reviewed image/caption dataset; it does not train the LoRA.
+
+version: 1
+
+workflow:
+  id: yamazaki-shishi-sdxl-dataset
+  name: Yamazaki Shishi — SDXL LoRA dataset preparation
+  description: Extract PNG frames from seven source videos, prepare captions, review, and package a Kaggle-ready dataset.
+  execution:
+    mode: dry_run
+    require_explicit_enable: true
+    stop_on_error: true
+
+project:
+  name: yamazaki-shishi
+  task: character_lora
+  base_model: stabilityai/stable-diffusion-xl-base-1.0
+  trigger_token: yamazaki_shishi
+  training: out_of_scope
+
+inputs:
+  video_dir: data/videos
+  expected_video_count: 7
+  videos:
+    - id: video_01
+      path: null
+    - id: video_02
+      path: null
+    - id: video_03
+      path: null
+    - id: video_04
+      path: null
+    - id: video_05
+      path: null
+    - id: video_06
+      path: null
+    - id: video_07
+      path: null
+  validation:
+    require_all_videos: true
+    allow_extra_videos: false
+    accepted_extensions: [.mp4, .mov, .mkv, .webm]
+
+frames:
+  output_dir: data/frames
+  image_format: png
+  extraction:
+    method: interval
+    interval_seconds: 1.0
+    max_frames_per_video: null
+  image:
+    preserve_original_aspect_ratio: true
+    resize: false
+    max_dimension: 1024
+  deduplication:
+    enabled: true
+    method: perceptual_hash
+    max_hamming_distance: 5
+    compare_across_videos: true
+
+captions:
+  mode: template
+  output_extension: .txt
+  template: "{trigger_token}, anime character"
+  variables:
+    trigger_token: yamazaki_shishi
+  require_one_caption_per_image: true
+  manual_review_required: true
+  note: Replace the generic template with accurate visual descriptions before training.
+
+dataset:
+  output_dir: data/dataset
+  image_caption_pairs: true
+  naming:
+    pattern: "{video_id}_{frame_number:06d}"
+  manifest:
+    path: manifest.json
+    include:
+      - source_video
+      - source_timestamp_seconds
+      - image_path
+      - caption_path
+      - image_width
+      - image_height
+      - perceptual_hash
+  validation:
+    reject_corrupt_images: true
+    reject_empty_captions: true
+    require_image_caption_pairs: true
+    report_duplicate_images: true
+  review:
+    generate_contact_sheet: true
+    contact_sheet_path: data/review/contact-sheet.jpg
+    require_human_approval_before_packaging: true
+
+package:
+  output_dir: dist
+  filename: yamazaki-shishi-sdxl-dataset.zip
+  include:
+    - images/
+    - manifest.json
+    - README.md
+  layout:
+    images_dir: images
+    caption_sidecar: same_basename_txt
+  exclude:
+    - source_videos/
+    - logs/
+    - temporary_files/
+    - local_credentials/
+  verify_zip_after_creation: true
+
+kaggle:
+  target: sdxl_lora_training
+  upload_mode: manual
+  upload_automatically: false
+  dataset_slug: yamazaki-shishi-sdxl-dataset
+  training_workflow: separate
+  note: Upload the ZIP or extracted dataset to Kaggle, then use a separate SDXL LoRA training notebook.
+
+artifacts:
+  run_dir: runs
+  log_jsonl: runs/events.jsonl
+  summary_json: runs/summary.json
+
+steps:
+  - id: validate_inputs
+    action: validate_video_inputs
+    depends_on: []
+  - id: extract_frames
+    action: extract_video_frames
+    depends_on: [validate_inputs]
+  - id: deduplicate_frames
+    action: deduplicate_images
+    depends_on: [extract_frames]
+  - id: generate_captions
+    action: generate_caption_sidecars
+    depends_on: [deduplicate_frames]
+  - id: build_manifest
+    action: build_dataset_manifest
+    depends_on: [generate_captions]
+  - id: validate_dataset
+    action: validate_image_caption_pairs
+    depends_on: [build_manifest]
+  - id: create_contact_sheet
+    action: create_contact_sheet
+    depends_on: [validate_dataset]
+  - id: human_review
+    action: wait_for_approval
+    depends_on: [create_contact_sheet]
+  - id: package_dataset
+    action: create_dataset_zip
+    depends_on: [human_review]
+  - id: verify_package
+    action: verify_dataset_zip
+    depends_on: [package_dataset]
+
+safety:
+  default_dry_run: true
+  no_shell_commands_from_yaml: true
+  no_automatic_kaggle_upload: true
+  no_training_in_this_workflow: true
+  never_overwrite_existing_package_without_confirmation: true
