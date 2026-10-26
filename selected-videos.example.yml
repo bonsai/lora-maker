@@ -1,0 +1,6 @@
+# Copy to selected-videos.yml only after reviewing source terms and rights.
+videos:
+  - video_id: sample01
+    source_url: "https://example.com/source-page"
+    local_path: "data/local-videos/sample01.mp4"
+    permission_status: approved
