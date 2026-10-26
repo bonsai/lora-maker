@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "kind": "video_selection",
+  "_instructions": "Copy to data/approvals/approval-record.json only after real review. This template is not an approval.",
+  "approved": false,
+  "project": "yamazaki-shishi",
+  "selected_video_ids": [],
+  "approved_uses": [],
+  "excluded_time_ranges": [],
+  "reason_each_video_is_representative": {},
+  "reviewed_by": "",
+  "reviewed_at": "",
+  "notes": ""
+}

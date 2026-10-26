@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "domain_decision",
+  "_instructions": "Copy to data/approvals/domain-decision.json only after real review. This template is not an approval.",
+  "approved": false,
+  "project": "yamazaki-shishi",
+  "subject_name": "",
+  "subject_type": "",
+  "rights_holder": "",
+  "intended_use": "private_experiment",
+  "publication_scope": "private_dataset",
+  "source_urls": [],
+  "permission_evidence": [
+    {
+      "reference": "",
+      "checked_at": "",
+      "covers": []
+    }
+  ],
+  "reviewed_by": "",
+  "reviewed_at": "",
+  "notes": ""
+}

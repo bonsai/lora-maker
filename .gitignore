@@ -1,0 +1,22 @@
+# Local-only generated and personal artifacts.
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Runner output
+runs/
+kaggle-upload-plan.json
+
+# Source media and derived data
+data/local-videos/
+data/source-cache/
+data/frames/
+data/dataset/
+data/review/
+dist/
+*.zip
+
+# Human-authored approval evidence may contain names and private URLs.
+data/approvals/*.json
+!data/approvals/*.template.json

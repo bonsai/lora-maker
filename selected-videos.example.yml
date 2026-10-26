@@ -1,6 +1,15 @@
-# Copy to selected-videos.yml only after reviewing source terms and rights.
+# Copy to selected-videos.yml only after rights and terms review.
+# Every field below is required by run_workflow.py; empty values block --execute.
+# permission_status must stay `pending` until a human has actually reviewed the source.
 videos:
-  - video_id: sample01
-    source_url: "https://example.com/source-page"
-    local_path: "data/local-videos/sample01.mp4"
-    permission_status: approved
+  - video_id: ""
+    source_url: ""
+    local_path: "data/local-videos/"
+    creator_or_rights_holder: ""
+    terms_url: ""
+    rights_basis: ""        # e.g. written_permission, self_owned, platform_license (not "publicly_visible")
+    permitted_uses: []      # required: acquisition, frame_extraction, dataset_creation
+    permission_status: pending  # pending | approved | restricted | rejected
+    reviewed_by: ""
+    reviewed_at: ""         # YYYY-MM-DD
+    notes: ""
