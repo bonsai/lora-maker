@@ -610,7 +610,6 @@ def extract(args) -> int:
                             "image_width": width,
                             "image_height": height,
                             "perceptual_hash": digest,
-                            "review_status": "pending",
                         }
                     )
                     seen.append(value)
