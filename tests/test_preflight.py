@@ -356,5 +356,37 @@ class DatasetIntegrityTests(unittest.TestCase):
         self.assertTrue(any(path.name == "x.png" for path in found))
 
 
+class OverwriteTests(unittest.TestCase):
+    def setUp(self):
+        self.config = rw.load_workflows()["03"]
+
+    def test_stale_files_detected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            images = root / "data/dataset/images"
+            images.mkdir(parents=True)
+            for name in ("a.png", "a.txt", "old.png", "old.txt", "notes.md"):
+                (images / name).write_text("x", encoding="utf-8")
+            rows = [{"image_path": "data/dataset/images/a.png", "caption_path": "data/dataset/images/a.txt"}]
+            stale = [path.name for path in rw.stale_dataset_files(root, self.config, rows)]
+        self.assertEqual(stale, ["old.png", "old.txt"])
+
+    def test_clear_removes_only_images_and_captions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            images = root / "data/dataset/images"
+            images.mkdir(parents=True)
+            for name in ("a.png", "a.txt", "notes.md"):
+                (images / name).write_text("x", encoding="utf-8")
+            removed = [path.name for path in rw.clear_dataset_images(root, self.config)]
+            remaining = sorted(path.name for path in images.iterdir())
+        self.assertEqual(removed, ["a.png", "a.txt"])
+        self.assertEqual(remaining, ["notes.md"])
+
+    def test_clear_is_noop_without_images_dir(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(rw.clear_dataset_images(Path(tmp), self.config), [])
+
+
 if __name__ == "__main__":
     unittest.main()

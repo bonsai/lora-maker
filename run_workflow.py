@@ -137,6 +137,36 @@ def existing_dataset_outputs(root: Path, config: dict) -> list[Path]:
     return [path for path in targets if path.is_file()]
 
 
+def stale_dataset_files(root: Path, config: dict, rows: list[dict]) -> list[Path]:
+    """Image/caption files present on disk but absent from manifest.json."""
+    images = root / config["dataset"]["output_dir"] / "images"
+    if not images.is_dir():
+        return []
+    expected = set()
+    for row in rows:
+        for key in ("image_path", "caption_path"):
+            if filled(row.get(key)):
+                expected.add(Path(str(row[key])).name)
+    return sorted(
+        path
+        for path in images.iterdir()
+        if path.is_file() and path.suffix.lower() in {".png", ".txt"} and path.name not in expected
+    )
+
+
+def clear_dataset_images(root: Path, config: dict) -> list[Path]:
+    """Remove previous images/captions only after --overwrite was confirmed."""
+    images = root / config["dataset"]["output_dir"] / "images"
+    removed: list[Path] = []
+    if not images.is_dir():
+        return removed
+    for path in sorted(images.iterdir()):
+        if path.is_file() and path.suffix.lower() in {".png", ".txt"}:
+            path.unlink()
+            removed.append(path)
+    return removed
+
+
 def log_event(name: str, status: str, **details) -> None:
     RUNS.mkdir(parents=True, exist_ok=True)
     row = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "event": name, "status": status, **details}
@@ -491,6 +521,18 @@ def extract(args) -> int:
             print(
                 f"Note: {len(existing)} existing dataset output(s) would block --execute without --overwrite."
             )
+            manifest_file = ROOT / config["dataset"]["output_dir"] / Path(config["dataset"]["manifest"]["path"]).name
+            if manifest_file.is_file():
+                try:
+                    rows = json.loads(manifest_file.read_text(encoding="utf-8")).get("images", [])
+                except (OSError, json.JSONDecodeError):
+                    rows = []
+                stale = stale_dataset_files(ROOT, config, rows) if rows else []
+                if stale:
+                    print(
+                        f"Note: {len(stale)} file(s) in the images directory are not referenced by manifest.json."
+                    )
+                    print("--overwrite clears previous images/captions before regenerating.")
         if blockers:
             shown = blockers[: args.limit]
             print(f"Blocked pending human review ({len(blockers)} unresolved):")
@@ -515,7 +557,9 @@ def extract(args) -> int:
             + ". Review them, then re-run with --overwrite."
         )
     if existing:
-        log_event("dataset_overwrite_confirmed", "warning", count=len(existing))
+        removed = clear_dataset_images(ROOT, config)
+        log_event("dataset_overwrite_confirmed", "warning", count=len(existing), removed=len(removed))
+        print(f"Removed {len(removed)} previous image/caption file(s) before regenerating.")
 
     import cv2
 
@@ -676,6 +720,15 @@ def package(_args) -> int:
         )
     if record["content_sha256"] != manifest_doc.get("content_sha256"):
         raise RuntimeError("dataset-approval.json content_sha256 does not match the reviewed dataset; re-approve")
+
+    stale = stale_dataset_files(ROOT, config, rows)
+    if stale:
+        shown = ", ".join(rel(path) for path in stale[:5])
+        raise RuntimeError(
+            f"{len(stale)} file(s) in the images directory are not referenced by manifest.json: {shown}"
+            + (" ..." if len(stale) > 5 else "")
+            + ". Remove them or re-run dataset --execute --overwrite; packaging refuses a mixed directory."
+        )
 
     output = ROOT / config["package"]["output_dir"] / config["package"]["filename"]
     output.parent.mkdir(parents=True, exist_ok=True)

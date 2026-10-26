@@ -25,8 +25,8 @@ python run_workflow.py kaggle-plan
 - `validate`: checks the four workflow YAML files and their safety defaults.
 - `preflight`: validates approval records and `selected-videos.yml` field by field. No media, no network.
 - `dataset`: dry-run by default; runs the same preflight and lists every unresolved condition. It reads local files only and never downloads videos.
-- `dataset --execute`: refuses to start unless preflight is clean. Also refuses to replace existing images, captions, manifest, or contact sheet unless `--overwrite` is passed explicitly. Extracts frames at the interval in workflow 03, deduplicates, writes image/caption pairs, a manifest, and a contact sheet. Captions are placeholders.
-- `package`: requires a complete `data/approvals/dataset-approval.json`, including the `manifest_sha256` and `content_sha256` printed by `dataset --execute`. Re-hashes every image and caption, so edits after approval abort packaging. Creates a ZIP without overwriting.
+- `dataset --execute`: refuses to start unless preflight is clean. Also refuses to replace existing images, captions, manifest, or contact sheet unless `--overwrite` is passed explicitly. `--overwrite` deletes previous `.png`/`.txt` files in the images directory before regenerating. Extracts frames at the interval in workflow 03, deduplicates, writes image/caption pairs, a manifest, and a contact sheet. Captions are placeholders.
+- `package`: requires a complete `data/approvals/dataset-approval.json`, including the `manifest_sha256` and `content_sha256` printed by `dataset --execute`. Re-hashes every image and caption, so edits after approval abort packaging. Also refuses to package when the images directory contains files absent from the manifest. Creates a ZIP without overwriting.
 - `kaggle-plan`: creates a local dry-run upload plan. It never connects to Kaggle or uploads.
 
 ## Approval records are validated, not just flagged
