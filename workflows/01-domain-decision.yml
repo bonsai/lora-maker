@@ -1,11 +1,19 @@
 version: 1
 id: domain-subject-decision
 name: "Domain and LoRA subject decision"
-purpose: "決定する: 誰・何を対象にLoRAを作り、どの権利・公開範囲で成果物を扱うか"
+purpose: "ヤマザキシシを対象とする非公開実験の範囲、出典、権利確認を決める"
 execution:
   mode: dry_run
   require_explicit_enable: true
   stop_on_error: true
+project_defaults:
+  project_name: yamazaki-shishi
+  subject_name: "ヤマザキシシ"
+  subject_type: fictional_character
+  intended_use: private_experiment
+  publication_scope: private_dataset
+  trigger_token: yamazaki_shishi
+  base_model: stabilityai/stable-diffusion-xl-base-1.0
 inputs:
   required:
     - project_name
@@ -14,29 +22,30 @@ inputs:
     - intended_use
     - publication_scope
   fields:
-    project_name: { type: string }
-    subject_name: { type: string, description: "人物・キャラクター・作品・ブランド等の対象" }
-    subject_type: { enum: [original_character, fictional_character, public_figure, private_person, style, other] }
+    project_name: { type: string, default: yamazaki-shishi }
+    subject_name: { type: string, default: "ヤマザキシシ" }
+    subject_type: { enum: [original_character, fictional_character, public_figure, private_person, style, other], default: fictional_character }
     source_urls: { type: array, items: string, default: [] }
     rights_holder: { type: string, default: unknown }
     permission_evidence: { type: array, items: string, default: [] }
-    intended_use: { enum: [private_experiment, research, internal_production, public_release, commercial] }
-    publication_scope: { enum: [local_only, private_dataset, public_dataset, public_model, commercial_distribution] }
-    trigger_token: { type: string }
-    base_model: { type: string, default: "stabilityai/stable-diffusion-xl-base-1.0" }
+    intended_use: { enum: [private_experiment, research, internal_production, public_release, commercial], default: private_experiment }
+    publication_scope: { enum: [local_only, private_dataset, public_dataset, public_model, commercial_distribution], default: private_dataset }
+    trigger_token: { type: string, default: yamazaki_shishi }
+    base_model: { type: string, default: stabilityai/stable-diffusion-xl-base-1.0 }
 decisions:
   gates:
     - id: subject_defined
       pass_when: "subject_name and subject_type are explicit"
     - id: source_traceable
-      pass_when: "each planned reference source has a recorded URL or local provenance"
+      pass_when: "each planned reference source has a recorded URL and provenance"
     - id: rights_review
-      pass_when: "rights and applicable platform terms have been reviewed for intended use"
-    - id: publication_approved
-      pass_when: "publication_scope is explicitly approved by a human"
+      pass_when: "source terms and applicable rights have been reviewed for private experimentation"
+    - id: private_scope_confirmed
+      pass_when: "artifacts remain local or in a private Kaggle dataset; no public release"
   blocked_conditions:
     - "Unknown permission is not treated as permission"
-    - "Public release or commercial use cannot proceed while rights_review is pending"
+    - "Public release and commercial use require a new explicit decision"
+    - "Private experiment does not override copyright, privacy, or platform terms"
 outputs:
   - domain-decision.json
   - domain-decision.md
