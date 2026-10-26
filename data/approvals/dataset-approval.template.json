@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "kind": "dataset_review",
+  "_instructions": "Copy to data/approvals/dataset-approval.json after reviewing the contact sheet, captions, and manifest. This template is not an approval.",
+  "approved": false,
+  "captions_reviewed": false,
+  "contact_sheet_reviewed": false,
+  "manifest_sha256": "",
+  "reviewed_by": "",
+  "reviewed_at": "",
+  "notes": ""
+}
