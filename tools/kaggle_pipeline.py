@@ -344,9 +344,29 @@ def build_kernel(
     source = source or (ROOT / "kaggle/train_lora.py")
     if not source.is_file():
         raise FileNotFoundError(f"training script missing: {source}")
-    shutil.copy2(source, build_dir / "train_lora.py")
-    (build_dir / "dataset.toml").write_text(render_dataset_toml(policy), encoding="utf-8")
+
+    # Embed config directly into the training script so Kaggle runtime
+    # file-path differences cannot break execution.
     config = render_run_config(policy, epochs=epochs, dim=dim)
+    toml_text = render_dataset_toml(policy)
+    script_text = source.read_text(encoding="utf-8")
+    embedded_config = json.dumps(config, ensure_ascii=False, indent=2)
+    if "__RUN_CONFIG_JSON__" not in script_text:
+        raise ValueError("train_lora.py is missing the __RUN_CONFIG_JSON__ marker")
+    if "__DATASET_TOML__" not in script_text:
+        raise ValueError("train_lora.py is missing the __DATASET_TOML__ marker")
+    script_text = script_text.replace(
+        'r"""__RUN_CONFIG_JSON__"""',
+        '"""' + embedded_config + '"""',
+    )
+    script_text = script_text.replace(
+        'r"""__DATASET_TOML__"""',
+        '"""' + toml_text + '"""',
+    )
+    (build_dir / "train_lora.py").write_text(script_text, encoding="utf-8")
+
+    # Keep sidecar files as well for backward compat / inspection
+    (build_dir / "dataset.toml").write_text(toml_text, encoding="utf-8")
     write_json(build_dir / "run_config.json", config)
     write_json(build_dir / "kernel-metadata.json", metadata)
 
