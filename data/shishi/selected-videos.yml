@@ -82,3 +82,21 @@ videos:
     reviewed_by: human reviewer
     reviewed_at: "2026-10-26"
     notes: "フクオカカウントダウン2020-2021 (31s, animation). 性的表現なし。LoRA データセット候補。"
+
+candidates:
+  # Newly registered candidate; deliberately excluded from approved videos until a human reviews rights and use scope.
+  - video_id: H0PuQujl2Gk
+    source_url: https://www.youtube.com/watch?v=H0PuQujl2Gk
+    local_path: "data/local-videos/H0PuQujl2Gk/H0PuQujl2Gk.mp4"
+    review_status: pending_human_review
+    permission_status: pending
+    rights_basis: pending_review
+    creator_or_rights_holder: pending_identification
+    terms_url: "https://www.youtube.com/t/terms"
+    permitted_uses: []
+    required_before_selection:
+      - verify video title and creator
+      - review rights and platform terms for private frame extraction and dataset creation
+      - confirm local source file exists
+      - record human reviewer and review date
+      - update data/approvals/approval-record.json with this video id and scope
