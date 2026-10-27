@@ -1,0 +1,127 @@
+# Workflow 05 — LoRA Training / ヤマザキシシ
+# Canonical policy for the Kaggle CLI/CD training pipeline.
+# The local dataset runner (workflow 03) stays unchanged; this file owns training.
+# Remote side effects happen only through tools/kaggle_pipeline.py with --execute.
+
+version: 1
+id: lora-training
+number: "05"
+name: "SDXL LoRA Training — ヤマザキシシ"
+purpose: "承認済みデータセットから SDXL LoRA を Kaggle GPU 上で CLI のみで学習し、safetensors を取得する"
+execution:
+  mode: dry_run
+  require_explicit_enable: true
+  stop_on_error: true
+
+project:
+  name: yamazaki-shishi
+  subject_name: "ヤマザキシシ"
+  intended_use: private_experiment
+  publication_scope: private_weights
+  visibility: private
+  trigger_token: yamazaki_shishi
+  base_model: stabilityai/stable-diffusion-xl-base-1.0
+
+upstream:
+  dataset_workflow: workflows/03-dataset-preparation.yml
+  kaggle_integration: workflows/04-kaggle-integration.yml
+  required_artifacts:
+    - data/approvals/dataset-approval.json
+    - dist/yamazaki-shishi-sdxl-dataset.zip
+    - runs/summary.json
+
+kaggle:
+  dataset_slug: tyokouchi/yamazaki-shishi-sdxl-dataset
+  dataset_zip: dist/yamazaki-shishi-sdxl-dataset.zip
+  kernel_slug: tyokouchi/yamazaki-shishi-sdxl-lora
+  accelerator: NvidiaTeslaT4
+  kernel_timeout_seconds: 10800      # hard cap for the kernel run (3h)
+  wait_timeout_seconds: 7200         # local/CD polling cap (2h)
+  poll_interval_seconds: 60
+  is_private: true
+  enable_gpu: true
+  enable_internet: true              # sd-scripts + SDXL base model
+  dataset_stage:
+    default: skip_if_remote_ready
+    require_explicit_flag: true       # --push-dataset
+    never_public: true
+
+framework:
+  repo: https://github.com/kohya-ss/sd-scripts
+  ref: v0.12.3
+  commit: cb70b96858477e716a2096292ab8aab433277f38
+  script: sdxl_train_network.py
+  install: pip install -r requirements.txt
+  run: accelerate launch --num_cpu_threads_per_process 2 --mixed_precision fp16 --num_processes 1
+
+training:
+  resolution: [1024, 1024]
+  enable_bucket: true
+  min_bucket_reso: 512
+  max_bucket_reso: 1536
+  bucket_reso_steps: 64
+  batch_size: 1
+  gradient_accumulation_steps: 4
+  max_train_epochs: 10
+  network_module: networks.lora
+  network_dim: 32
+  network_alpha: 16
+  network_train_unet_only: true
+  cache_latents_to_disk: true
+  cache_text_encoder_outputs_to_disk: true
+  optimizer_type: AdamW8bit
+  learning_rate: 1.0e-4
+  unet_lr: 1.0e-4
+  lr_scheduler: cosine
+  lr_warmup_steps: 100
+  mixed_precision: fp16
+  no_half_vae: true
+  gradient_checkpointing: true
+  sdpa: true
+  min_snr_gamma: 5
+  seed: 20261026
+  save_every_n_epochs: 2
+  save_model_as: safetensors
+  output_name: yamazaki-shishi-sdxl-lora
+  max_data_loader_n_workers: 2
+
+expected:
+  dataset_images: 144
+  steps: 360                        # ceil(144 * 10 / (1 * 4))
+  wall_time_hours: "1.5-2.5"
+  output_dir: /kaggle/working/output
+  artifacts: ["output/*.safetensors", "output/run-summary.json", "train.log"]
+
+gates:
+  required_before: [dataset_upload, kernel_push, kernel_rerun]
+  checks:
+    - id: dataset_approval_valid
+      does: dataset-approval.json のハッシュと ZIP の manifest が一致する
+    - id: zip_unchanged
+      does: ZIP の SHA-256 が runs/summary.json と一致する
+    - id: private_only
+      does: dataset / kernel は private。public への変更は別承認
+    - id: explicit_execute
+      does: remote 副作用は --execute があるときだけ
+    - id: no_credentials
+      does: token / kaggle.json の中身をログ・receipt・YAML に出さない
+
+outputs:
+  receipts: runs/kaggle/
+  local_model_dir: dist/lora/
+  event_log: runs/events.jsonl
+
+safety:
+  default_dry_run: true
+  no_public_release_without_new_approval: true
+  no_dataset_overwrite_without_new_version: true
+  no_training_without_dataset_approval: true
+  never_print_credentials: true
+  never_exceed_kaggle_quota: true
+  no_automatic_retry_on_error: true
+
+human_approval:
+  required_before: [dataset_upload, kernel_push]
+  approval_sources:
+    - data/approvals/dataset-approval.json
+    - GitHub Environment "kaggle" (CD only)

@@ -1,0 +1,308 @@
+# reqs.yaml — ヤマザキシシ SDXL LoRA の要求 / パイプライン / カンバン
+# 単一の正本。KANBAN.md と docs/KAGGLE_CLI_PIPELINE.md はこの内容から導出する。
+# 更新時は updated を書き換え、status は下の status_values のみを使う。
+
+version: 1
+project: yamazaki-shishi
+subject: "ヤマザキシシ"
+updated: "2026-10-27"
+owner: tyokouchi
+intended_use: private_experiment
+visibility: private
+
+status_values: [todo, ready, in_progress, blocked, done]
+priority_values: [must, should, could]
+
+# ---------------------------------------------------------------- 目的と境界
+
+goal: >
+  承認済み 144 フレームの非公開データセットから SDXL LoRA
+  (trigger: yamazaki_shishi) を Kaggle GPU 上で CLI のみで学習し、
+  safetensors と評価用サンプルをローカルへ取得して比較評価できる状態にする。
+  GUI 操作はゼロ、再実行はコマンド 1 本で行えること。
+
+non_goals:
+  - 公開配布 (weights / dataset / 生成物) — 別途の明示承認が必要
+  - 学習データの再取得・新規動画のダウンロード
+  - Kaggle 以外の GPU 事業者への送信
+  - 本番 Web サービスへの組み込み
+
+hard_constraints:
+  - データは data/dataset (144 枚 + captions) と dist/yamazaki-shishi-sdxl-dataset.zip のみを使う
+  - Kaggle dataset / kernel は private 固定。public への変更はこのファイルの範囲外
+  - 認証情報 (token / cookie / kaggle.json の中身) を YAML・ログ・リポジトリ・receipt に書かない
+  - 既存 dataset を差分確認なしで上書きしない
+  - ローカル VRAM は 2GB 級のため学習は Kaggle GPU を前提とする
+  - GPU 予算は Kaggle の月次 quota (現在 1.65h / 30h 使用) を超えない
+
+# ---------------------------------------------------------------- 環境
+
+environments:
+  local:
+    os: Windows 11
+    python: "3.13"
+    kaggle_cli: "2.2.5 (OAuth, username=tyokouchi)"
+    runner: run_workflow.py
+    vram: "2GB 級 — 学習不可"
+  remote:
+    service: Kaggle
+    accelerator: NvidiaTeslaT4
+    kernel_time_limit_hours: 9
+    working_dir_limit_gb: 20
+    internet: required (sd-scripts / SDXL base の取得)
+
+# ---------------------------------------------------------------- パイプライン
+
+pipeline:
+  name: kaggle-lora
+  entrypoint: tools/kaggle_pipeline.py
+  default_mode: dry_run          # --execute を付けたときだけ remote 副作用
+  approval_gate: workflows/05-lora-training.yml
+  stages:
+    - id: doctor
+      does: 認証・quota・dataset 承認・ZIP ハッシュ・収束状態の read-only 診断
+      side_effects: none
+    - id: build
+      does: build/kaggle-lora/ に train_lora.py + config.toml + kernel-metadata.json を生成
+      side_effects: local files only
+    - id: dataset-push
+      does: private Kaggle dataset の作成または新バージョン化
+      side_effects: remote upload
+      requires: [dataset approval, --execute]
+      default: skip_if_remote_ready
+    - id: train
+      does: kernel を push して T4 で SDXL LoRA を学習
+      side_effects: remote GPU job
+      requires: [--execute, kernel slug, dataset source]
+    - id: wait
+      does: kernel status を terminal まで polling (timeout 付き)
+      side_effects: none
+    - id: fetch
+      does: kernel output を dist/lora/<run-id>/ に取得し safetensors を検証
+      side_effects: local files only
+    - id: evaluate
+      does: ComfyUI (Windows) で before/after 比較、サンプル画像と所見を保存
+      side_effects: local files only
+  receipts:
+    dir: runs/kaggle
+    files: [doctor.json, build.json, push.json, wait.json, fetch.json]
+  event_log: runs/events.jsonl
+
+# ---------------------------------------------------------------- 学習レシピ
+
+training:
+  base_model: stabilityai/stable-diffusion-xl-base-1.0
+  framework: kohya-ss/sd-scripts (sdxl_train_network.py, pinned commit)
+  trigger_token: yamazaki_shishi
+  dataset:
+    source: dist/yamazaki-shishi-sdxl-dataset.zip
+    images: 144
+    layout: "images/<name>.png + <name>.txt"
+  params:
+    resolution: 1024
+    enable_bucket: true
+    min_bucket_reso: 512
+    max_bucket_reso: 1536
+    batch_size: 1
+    gradient_accumulation_steps: 4
+    max_train_epochs: 10
+    network_module: networks.lora
+    network_dim: 32
+    network_alpha: 16
+    network_train_unet_only: true
+    optimizer_type: AdamW8bit
+    learning_rate: 1.0e-4
+    lr_scheduler: cosine
+    lr_warmup_steps: 100
+    mixed_precision: fp16
+    no_half_vae: true          # SDXL VAE の fp16 NaN 対策
+    gradient_checkpointing: true
+    cache_latents_to_disk: true
+    min_snr_gamma: 5
+    seed: 20261026
+    save_every_n_epochs: 2
+    output_name: yamazaki-shishi-sdxl-lora
+  expected:
+    steps: 360                # 144 img x 10 epoch / (bs1 x ga4)
+    wall_time_hours: "1.5-2.5 (T4)"
+    artifacts: ["*.safetensors", "run-summary.json", "train.log"]
+
+# ---------------------------------------------------------------- 要求
+
+requirements:
+  - id: R-001
+    title: 承認済みデータセットを唯一の入力にする
+    priority: must
+    status: done
+    acceptance:
+      - dataset-approval.json の manifest_sha256 / content_sha256 が実ファイルと一致する
+      - ZIP の SHA-256 が runs/summary.json と一致する
+    evidence: ["data/approvals/dataset-approval.json", "dist/yamazaki-shishi-sdxl-dataset.zip", "runs/summary.json"]
+
+  - id: R-002
+    title: Kaggle private dataset に 144 ペアが登録済み
+    priority: must
+    status: done
+    acceptance:
+      - datasets files に images/*.png + *.txt が 288 件ある
+      - visibility が private
+    evidence: ["tyokouchi/yamazaki-shishi-sdxl-dataset (datasetId 12860847)"]
+
+  - id: R-003
+    title: CLI オーケストレータ (doctor/build/push/wait/fetch/run)
+    priority: must
+    status: todo
+    acceptance:
+      - 全サブコマンドが --help を返す
+      - 既定は dry-run、remote 操作は --execute 必須
+      - 失敗時に非 0 exit と runs/events.jsonl への記録
+    evidence: ["tools/kaggle_pipeline.py"]
+
+  - id: R-004
+    title: 学習カーネル (SDXL / kohya, T4, private)
+    priority: must
+    status: todo
+    acceptance:
+      - kernel-metadata.json が enable_gpu=true, is_private=true, dataset_sources を含む
+      - fp16 + no_half_vae + gradient checkpointing で NaN なく完走
+      - /kaggle/working に safetensors と run-summary.json が出る
+    evidence: ["kaggle/train_lora.py", "workflows/05-lora-training.yml"]
+
+  - id: R-005
+    title: 失敗を fail-closed にする承認ゲート
+    priority: must
+    status: todo
+    acceptance:
+      - dataset/kernel が private 以外なら中断
+      - 未承認 dataset では push しない
+      - token を標準出力・receipt に含めない
+    evidence: ["tests/test_kaggle_pipeline.py"]
+
+  - id: R-006
+    title: CI でオフライン検証する
+    priority: must
+    status: todo
+    acceptance:
+      - GitHub Actions で unittest + validate + build (network なし) が通る
+      - kernel-metadata / config.toml の必須値がテストで固定される
+    evidence: [".github/workflows/lora-pipeline-ci.yml"]
+
+  - id: R-007
+    title: CD で Kaggle 学習を起動する
+    priority: should
+    status: blocked
+    acceptance:
+      - workflow_dispatch + confirm 入力 + GitHub Environment 承認で起動
+      - secrets (KAGGLE_USERNAME / KAGGLE_KEY or KAGGLE_API_TOKEN) は env 経由のみ
+      - 成果物 (safetensors, log, summary) を artifact として保存
+    evidence: [".github/workflows/lora-train.yml"]
+    blocked_by: "GitHub secrets / Environment 未設定 (local は OAuth のみ)"
+
+  - id: R-008
+    title: LoRA の品質を比較評価する
+    priority: must
+    status: todo
+    acceptance:
+      - 同一 seed / prompt で before/after を並べた画像を保存
+      - trigger 有無・強度 0.6/0.8/1.0 の比較所見を残す
+      - 破綻 (色ずれ / 構図崩れ / 過学習) を記録
+    evidence: ["data/review/lora-eval/"]
+
+  - id: R-009
+    title: 再現可能なレシピを固定する
+    priority: should
+    status: todo
+    acceptance:
+      - 学習設定がこの reqs.yaml と生成物で一致する
+      - sd-scripts の commit と依存バージョンを receipt に残す
+      - 同一設定で再実行できるコマンドが docs に 1 本で書かれている
+    evidence: ["docs/KAGGLE_CLI_PIPELINE.md"]
+
+  - id: R-010
+    title: 既存ローカル runner の契約を壊さない
+    priority: must
+    status: done
+    acceptance:
+      - run_workflow.py validate / dataset (dry-run) が通る
+      - 既存 unittest が通る
+    evidence: [".github/workflows/local-runner-ci.yml", "tests/test_preflight.py"]
+
+# ---------------------------------------------------------------- カンバン
+
+kanban:
+  columns: [todo, ready, in_progress, blocked, done]
+  cards:
+    - id: K-01
+      title: データセット生成と承認 (144 枚 / ZIP)
+      column: done
+      refs: [R-001]
+      evidence: "manifest adb510cb… / zip 1360cb59…"
+    - id: K-02
+      title: Kaggle private dataset 登録
+      column: done
+      refs: [R-002]
+      evidence: "tyokouchi/yamazaki-shishi-sdxl-dataset"
+    - id: K-03
+      title: 過去の notebook 試行の整理 (NaN / make-lora ERROR)
+      column: done
+      refs: [R-004]
+      evidence: "kaggle/make-lora.ipynb, kaggle/make-lora.py を参照用に隔離"
+    - id: K-04
+      title: kaggle_pipeline.py の実装
+      column: ready
+      refs: [R-003]
+      next: "doctor -> build -> push -> wait -> fetch を 1 ファイルで"
+    - id: K-05
+      title: train_lora.py + config.toml の実装
+      column: ready
+      refs: [R-004]
+      next: "fp16 + no_half_vae + grad checkpointing を既定に"
+    - id: K-06
+      title: 承認ゲートとテスト
+      column: todo
+      refs: [R-005, R-010]
+      blocked_by: K-04
+    - id: K-07
+      title: CI (オフライン) 追加
+      column: todo
+      refs: [R-006]
+      blocked_by: K-04, K-05
+    - id: K-08
+      title: CD (workflow_dispatch) 追加
+      column: blocked
+      refs: [R-007]
+      blocked_by: "GitHub secrets / Environment 未設定"
+    - id: K-09
+      title: T4 で 1 本目の学習を完走
+      column: todo
+      refs: [R-004, R-009]
+      blocked_by: K-04, K-05
+    - id: K-10
+      title: ComfyUI で before/after 評価
+      column: todo
+      refs: [R-008]
+      blocked_by: K-09
+    - id: K-11
+      title: 設定と手順のドキュメント化
+      column: todo
+      refs: [R-009]
+      blocked_by: K-04
+
+# ---------------------------------------------------------------- 既知のリスク
+
+risks:
+  - id: X-01
+    risk: T4 16GB で SDXL 1024 が OOM する
+    mitigation: batch=1, grad accumulation, gradient_checkpointing, cache_latents_to_disk, unet only
+  - id: X-02
+    risk: fp16 VAE で loss が NaN になる (過去に step 25 で発生)
+    mitigation: no_half_vae, min_snr_gamma, fp16 mixed precision, step ログ
+  - id: X-03
+    risk: Kaggle の GPU quota (30h/月) を消費する
+    mitigation: 1 回 2h 以内、save_every_n_epochs=2 で途中成果を確保、dry-run で事前確認
+  - id: X-04
+    risk: 権利・非公開性の破壊 (public 化 / 元動画混入)
+    mitigation: private 固定、ZIP 内容検証、push 前ゲート
+  - id: X-05
+    risk: GitHub Actions から Kaggle 認証できない
+    mitigation: KAGGLE_API_TOKEN 対応 + Environment 承認 + 失敗時はローカル CLI で続行
