@@ -63,14 +63,27 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _search(*names: str) -> Path | None:
+    """Look for a file in the script dir, Kaggle working dir, and /kaggle/src."""
+    for name in names:
+        for base in (HERE, Path("/kaggle/working"), Path("/kaggle/src"), Path.cwd()):
+            candidate = base / name
+            if candidate.is_file():
+                return candidate
+    return None
+
+
 def load_config() -> dict:
     if "__RUN_CONFIG_JSON__" not in EMBEDDED_RUN_CONFIG:
         config = json.loads(EMBEDDED_RUN_CONFIG)
         origin = "embedded"
     else:
-        path = HERE / "run_config.json"
-        if not path.is_file():
-            raise FileNotFoundError("run_config.json is missing from the kernel bundle")
+        path = _search("run_config.json")
+        if path is None:
+            raise FileNotFoundError(
+                "run_config.json is missing from the kernel bundle; "
+                f"searched under {HERE}, /kaggle/working, /kaggle/src, {Path.cwd()}"
+            )
         config = json.loads(path.read_text(encoding="utf-8"))
         origin = str(path)
     for key in ("base_model", "output_name", "sd_scripts", "training"):
@@ -88,16 +101,24 @@ def load_config() -> dict:
 
 
 def write_dataset_config(path: Path | None = None) -> Path:
-    path = path or (HERE / "dataset.toml")
+    if path is not None:
+        target = path
+    else:
+        target = _search("dataset.toml")
+        if target is None:
+            target = HERE / "dataset.toml"
     if "__DATASET_TOML__" not in EMBEDDED_DATASET_TOML:
-        path.write_text(EMBEDDED_DATASET_TOML, encoding="utf-8")
+        target.write_text(EMBEDDED_DATASET_TOML, encoding="utf-8")
         origin = "embedded"
     else:
-        if not path.is_file():
-            raise FileNotFoundError("dataset.toml is missing from the kernel bundle")
-        origin = str(path)
+        if not target.is_file():
+            raise FileNotFoundError(
+                "dataset.toml is missing from the kernel bundle; "
+                f"searched under {HERE}, /kaggle/working, /kaggle/src, {Path.cwd()}"
+            )
+        origin = str(target)
     log(f"dataset config loaded from {origin}")
-    return path
+    return target
 
 
 
@@ -211,7 +232,7 @@ def install_framework(config: dict) -> str:
     return head
 
 
-def build_command(config: dict) -> list[str]:
+def build_command(config: dict, dataset_config_path: Path | None = None) -> list[str]:
     training = config["training"]
     command = [
         "accelerate",
@@ -228,7 +249,7 @@ def build_command(config: dict) -> list[str]:
         "--pretrained_model_name_or_path",
         config["base_model"],
         "--dataset_config",
-        str(HERE / "dataset.toml"),
+        str(dataset_config_path or HERE / "dataset.toml"),
         "--output_dir",
         str(OUTPUT),
         "--output_name",
@@ -341,9 +362,10 @@ def main() -> int:
         log(f"gpu: {torch.cuda.get_device_name(0)} / torch {torch.__version__} / cuda {torch.version.cuda}")
 
         target, count = prepare_dataset()
+        dataset_config_path = write_dataset_config()
         commit = install_framework(config)
         OUTPUT.mkdir(parents=True, exist_ok=True)
-        run(build_command(config), cwd=SD_SCRIPTS)
+        run(build_command(config, dataset_config_path=dataset_config_path), cwd=SD_SCRIPTS)
         if not list(OUTPUT.glob("*.safetensors")):
             raise RuntimeError("training finished but no safetensors file was produced")
         write_summary(
