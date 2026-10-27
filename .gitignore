@@ -3,10 +3,12 @@
 venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Runner output
 runs/
 kaggle-upload-plan.json
+kaggle-output/
 
 # Build artifacts (generated kernel bundles)
 build/
@@ -23,3 +25,13 @@ dist/
 # Human-authored approval evidence may contain names and private URLs.
 data/approvals/*.json
 !data/approvals/*.template.json
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Working files
+data/selected-videos.yml
+data/selected-videos.yml.bak

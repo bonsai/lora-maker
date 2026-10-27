@@ -780,7 +780,19 @@ def cmd_run(args) -> int:
         return code
     code = wait_for(policy, kernel_id, timeout=int(args.wait_timeout), interval=int(args.interval))
     if code:
-        print("training did not complete; run `logs` for the tail")
+        print("training did not complete; fetching tail log automatically...")
+        try:
+            log_output = kaggle(["kernels", "logs", kernel_id], timeout=600)
+            tail = "\n".join(log_output.splitlines()[-40:])
+            print("\n--- tail log ---\n")
+            print(tail)
+            print("\n--- end tail ---\n")
+            path = KAGGLE_RUNS / f"{kernel_id.split('/')[-1]}-logs.txt"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(log_output, encoding="utf-8")
+            print(f"full log: {path}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"could not fetch logs: {exc}")
         return code
     return cmd_fetch(argparse.Namespace(kernel=kernel_id, owner=kernel_id.split("/")[0]))
 

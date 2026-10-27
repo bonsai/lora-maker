@@ -363,7 +363,7 @@ def main() -> int:
             raise RuntimeError("CUDA is not available; the kernel must run with a GPU accelerator")
         log(f"gpu: {torch.cuda.get_device_name(0)} / torch {torch.__version__} / cuda {torch.version.cuda}")
 
-        target, count = prepare_dataset()
+        target, count = prepare_dataset(config)
         dataset_config_path = write_dataset_config()
         commit = install_framework(config)
         OUTPUT.mkdir(parents=True, exist_ok=True)
