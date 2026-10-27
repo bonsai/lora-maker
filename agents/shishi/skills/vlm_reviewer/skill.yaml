@@ -1,0 +1,47 @@
+name: shishi_vlm_reviewer
+version: 1.0.0
+description: "Vision-Language Model reviewer for Yamazaki Shishi animation frames. Supports LM Studio, OpenAI, Gemini, Ollama with Shishi-specific prompts."
+author: "MMX Project"
+license: "MIT"
+entry_point: shishi_vlm_reviewer.py
+commands:
+  - name: review
+    description: "Review Shishi frames with VLM"
+    usage: "shishi_vlm_reviewer review <frames_dir> [--prompt PROMPT] [--provider PROVIDER] [--model MODEL] [--sample N] [--output FILE]"
+  - name: batch
+    description: "Batch review all frames in directory"
+    usage: "shishi_vlm_reviewer batch <frames_dir> [--prompt PROMPT] [--provider PROVIDER] [--model MODEL] [--output-jsonl FILE] [--output-db FILE]"
+  - name: compare
+    description: "Compare two version frame sets"
+    usage: "shishi_vlm_reviewer compare <v1_dir> <v2_dir> [--criteria CRITERIA]"
+config_schema:
+  provider:
+    type: string
+    enum: [lmstudio, openai, gemini, ollama, custom]
+    default: lmstudio
+  model:
+    type: string
+    default: "tempura-qwen2.5-vl-3b"
+  api_base:
+    type: string
+    default: "http://localhost:1234/v1"
+  api_key:
+    type: string
+    default: ""
+  max_tokens:
+    type: integer
+    default: 1000
+  temperature:
+    type: number
+    default: 0.3
+  timeout:
+    type: integer
+    default: 120
+  max_image_size:
+    type: integer
+    default: 720
+presets:
+  full: "Complete Shishi animation frame review (style, quality, consistency)"
+  style: "Focus on Shishi watercolor style fidelity"
+  quality: "Focus on technical quality (artifacts, blur, compression)"
+  quick: "Quick 2-3 sentence assessment with score"

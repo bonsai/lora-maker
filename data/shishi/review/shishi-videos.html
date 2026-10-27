@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ヤマザキシシ 動画レビュー（アニメのみ）</title>
+<style>
+  :root { --bg:#0f1116; --card:#181b23; --line:#2a2f3a; --fg:#e8eaf0; --dim:#9aa3b2; --accent:#ff5d8f; --ok:#39d98a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; padding-bottom:120px; }
+  header { position:sticky; top:0; z-index:10; background:rgba(15,17,22,.96); border-bottom:1px solid var(--line); padding:14px 18px; backdrop-filter:blur(8px); }
+  h1 { font-size:17px; margin:0 0 4px; }
+  .sub { color:var(--dim); font-size:12px; }
+  .warn { margin-top:8px; font-size:12px; color:#ffd166; background:#2a2213; border:1px solid #4a3a17; border-radius:6px; padding:6px 9px; }
+  .controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  button, input { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:5px 10px; cursor:pointer; }
+  button.active { border-color:var(--accent); color:var(--accent); }
+  /* View selector */
+  .view-group { display:flex; gap:4px; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:3px; }
+  .view-group button { border:none; background:transparent; padding:5px 12px; border-radius:4px; }
+  .view-group button.active { background:var(--accent); color:#fff; }
+  main.view-grid { grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); }
+  main.view-list { grid-template-columns:1fr; }
+  main.view-list .card { flex-direction:row; align-items:center; }
+  main.view-list .thumb { flex:0 0 auto; width:200px; aspect-ratio:16/9; }
+  main.view-list .body { flex:1; }
+  main.view-list .dur { position:static; }
+  @media (max-width:640px) {
+    main.view-list .thumb { width:140px; }
+  }
+  input[type=search] { min-width:220px; cursor:text; }
+  main { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; padding:16px 18px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+  .card.picked { border-color:var(--ok); box-shadow:0 0 0 1px var(--ok) inset; }
+  .thumb { position:relative; aspect-ratio:16/9; background:#000; cursor:pointer; }
+  .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .thumb iframe { width:100%; height:100%; border:0; }
+  .dur { position:absolute; right:6px; bottom:6px; background:rgba(0,0,0,.8); padding:1px 6px; border-radius:4px; font-size:12px; }
+  .play { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:40px; color:rgba(255,255,255,.9); text-shadow:0 2px 10px #000; }
+  .body { padding:10px 12px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .title { font-size:13px; line-height:1.4; }
+  .meta { color:var(--dim); font-size:11px; display:flex; gap:8px; flex-wrap:wrap; }
+  .badge { border:1px solid var(--line); border-radius:999px; padding:0 7px; font-size:11px; }
+  .badge.animation { color:#7cc4ff; border-color:#2b4a66; }
+  .badge.uncertain { color:#ffd166; border-color:#5a4a1d; }
+  .badge.live, .badge.tutorial, .badge.talk, .badge.promo, .badge.documentary { color:#8b93a3; }
+  .note { color:#ffd166; font-size:11px; }
+  .row { display:flex; gap:8px; align-items:center; margin-top:auto; }
+  .row a { color:var(--dim); font-size:11px; }
+  .pick { display:flex; gap:6px; align-items:center; font-size:12px; cursor:pointer; }
+  footer { position:fixed; left:0; right:0; bottom:0; background:rgba(15,17,22,.97); border-top:1px solid var(--line); padding:10px 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .count { color:var(--ok); font-weight:600; }
+  pre { display:none; position:fixed; left:18px; right:18px; bottom:64px; max-height:45vh; overflow:auto; background:#0b0d12; border:1px solid var(--line); border-radius:8px; padding:12px; font-size:12px; white-space:pre-wrap; z-index:20; }
+  .empty { color:var(--dim); padding:30px; text-align:center; grid-column:1/-1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ヤマザキシシ 動画レビュー — アニメのみ</h1>
+  <div class="sub">公式 YouTube チャンネル（@shishinkooo）の公開メタデータのみ。動画ファイルは取得していません。</div>
+  <div class="warn">ここで選んでも承認ではありません。権利確認と <code>permission_status: approved</code> は別ゲートです。選択結果は YAML 雛形（pending）として書き出せます。</div>
+  <div class="controls">
+    <button data-filter="animation" class="active">アニメのみ</button>
+    <button data-filter="uncertain">不確実</button>
+    <button data-filter="all">すべて</button>
+    <label class="pick"><input type="checkbox" id="onlyPicked"> 選択のみ表示</label>
+    <div class="view-group" id="viewGroup">
+      <button data-view="grid" class="active" title="グリッド">▦</button>
+      <button data-view="list" title="リスト">≡</button>
+    </div>
+    <input type="search" id="q" placeholder="タイトル・ID で検索">
+    <span class="sub" id="shown"></span>
+  </div>
+</header>
+<main id="grid"></main>
+<footer>
+  <span>選択: <span class="count" id="count">0</span> 本</span>
+  <button id="export">選択を YAML でコピー</button>
+  <button id="exportJson">JSON でコピー</button>
+  <button id="clear">選択をクリア</button>
+  <span class="sub">選んだ本数はブラウザに保存されます</span>
+</footer>
+<pre id="out"></pre>
+<script>
+const ITEMS = [{"i": 1, "id": "H0PuQujl2Gk", "title": "あくるひのあるかないあし / now now feet, no no feet（2024）", "duration": 138, "views": 1500, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=H0PuQujl2Gk"}, {"i": 2, "id": "fP30CtDJEVU", "title": "シシヤマザキの日常 - 東京編 Wholesome day in TOKYO", "duration": 684, "views": 7300, "category": "live", "note": "", "url": "https://www.youtube.com/watch?v=fP30CtDJEVU"}, {"i": 3, "id": "3fTtUjH2bn8", "title": "シシヤマザキの日常 A day of ShiShi Yamazaki", "duration": 933, "views": 10000, "category": "live", "note": "", "url": "https://www.youtube.com/watch?v=3fTtUjH2bn8"}, {"i": 4, "id": "9ZSAFfGl3Y4", "title": "山の日 YAMA DAY", "duration": 56, "views": 6300, "category": "uncertain", "note": "短尺。アニメか実写か未確認", "url": "https://www.youtube.com/watch?v=9ZSAFfGl3Y4"}, {"i": 5, "id": "oLqCBeCitJw", "title": "ShiShi Yamazaki x Grand Seiko USA", "duration": 41, "views": 10000, "category": "uncertain", "note": "ブランド案件。アニメかメイキングか未確認", "url": "https://www.youtube.com/watch?v=oLqCBeCitJw"}, {"i": 6, "id": "FRtCYQSJHU0", "title": "AWA POWA!", "duration": 63, "views": 7300, "category": "uncertain", "note": "短尺作品の可能性。要確認", "url": "https://www.youtube.com/watch?v=FRtCYQSJHU0"}, {"i": 7, "id": "riCD2hlSefw", "title": "【予告編】対談企画第6弾！ゲスト：unpis", "duration": 56, "views": 978, "category": "promo", "note": "", "url": "https://www.youtube.com/watch?v=riCD2hlSefw"}, {"i": 8, "id": "8LZTfa_nfUA", "title": "【予告編】対談企画第5弾！ゲスト：久野遥子", "duration": 49, "views": 1700, "category": "promo", "note": "", "url": "https://www.youtube.com/watch?v=8LZTfa_nfUA"}, {"i": 9, "id": "TdWDZyf8vns", "title": "Bloom YAMAZAKI", "duration": 40, "views": 7700, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=TdWDZyf8vns"}, {"i": 10, "id": "ed8eej5yDzc", "title": "【参加メンバー募集中】シシヤマザキのお絵かき教室【もうすぐ一周年】", "duration": 121, "views": 6900, "category": "promo", "note": "", "url": "https://www.youtube.com/watch?v=ed8eej5yDzc"}, {"i": 11, "id": "OPp-23lEd0U", "title": "【予告編】対談企画第4弾！ゲスト：牛木匡憲", "duration": 46, "views": 1400, "category": "promo", "note": "", "url": "https://www.youtube.com/watch?v=OPp-23lEd0U"}, {"i": 12, "id": "QJ9LvngEepg", "title": "ShiShi Yamazaki Reel 2021", "duration": 96, "views": 7800, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=QJ9LvngEepg"}, {"i": 13, "id": "6Ba2zzNREco", "title": "【予告編】対談企画第3弾！ゲスト：井上涼", "duration": 38, "views": 1500, "category": "promo", "note": "", "url": "https://www.youtube.com/watch?v=6Ba2zzNREco"}, {"i": 14, "id": "TfmHub8uQcM", "title": "フクオカカウントダウン2020-2021 FUKUOKA COUNTDOWN", "duration": 31, "views": 5300, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=TfmHub8uQcM"}, {"i": 15, "id": "JUTt3ooiNNo", "title": "【予告編】対談企画第2弾！ゲスト：草野絵美", "duration": 38, "views": 588, "category": "promo", "note": "", "url": "https://www.youtube.com/watch?v=JUTt3ooiNNo"}, {"i": 16, "id": "jMvxqcpbk0s", "title": "「言葉になりたい」【予告編その2】対談企画第1弾！ゲスト：なみちえ", "duration": 86, "views": 818, "category": "promo", "note": "", "url": "https://www.youtube.com/watch?v=jMvxqcpbk0s"}, {"i": 17, "id": "pUPaWNU3eBA", "title": "押入れデスクとお部屋紹介 Room tour! Old House in Japan's countryside", "duration": 441, "views": 2700, "category": "live", "note": "", "url": "https://www.youtube.com/watch?v=pUPaWNU3eBA"}, {"i": 18, "id": "cY9gDq0ujXQ", "title": "【予告編】対談企画第1弾！ゲスト：なみちえ", "duration": 37, "views": 1100, "category": "promo", "note": "", "url": "https://www.youtube.com/watch?v=cY9gDq0ujXQ"}, {"i": 19, "id": "vtSsoWt5UC8", "title": "ラフに描くコツと魅力を教えます！", "duration": 167, "views": 1700, "category": "tutorial", "note": "", "url": "https://www.youtube.com/watch?v=vtSsoWt5UC8"}, {"i": 20, "id": "ChY-zBgjDbU", "title": "Photoshopで顔を描く", "duration": 112, "views": 3200, "category": "tutorial", "note": "", "url": "https://www.youtube.com/watch?v=ChY-zBgjDbU"}, {"i": 21, "id": "5VikClT5Zj4", "title": "文字が描けるなら絵は描ける", "duration": 126, "views": 1000, "category": "tutorial", "note": "", "url": "https://www.youtube.com/watch?v=5VikClT5Zj4"}, {"i": 22, "id": "bRTIB65ZrDI", "title": "タコ踊りしながら悩み相談に答えたりするインスタライブ動画", "duration": 2124, "views": 1100, "category": "talk", "note": "", "url": "https://www.youtube.com/watch?v=bRTIB65ZrDI"}, {"i": 23, "id": "D0nDNkwqc2U", "title": "色とコントラストの大切なおはなし", "duration": 116, "views": 2000, "category": "tutorial", "note": "", "url": "https://www.youtube.com/watch?v=D0nDNkwqc2U"}, {"i": 24, "id": "_03HMYlLUFo", "title": "アクリル絵具で水彩のような滲（にじ）みをつくる方法🎨", "duration": 127, "views": 4500, "category": "tutorial", "note": "", "url": "https://www.youtube.com/watch?v=_03HMYlLUFo"}, {"i": 25, "id": "6KOxqg9avEc", "title": "「絵具と筆って素敵🍑のお話」お絵かき教室zoom　チラ見せ動画", "duration": 100, "views": 1100, "category": "tutorial", "note": "", "url": "https://www.youtube.com/watch?v=6KOxqg9avEc"}, {"i": 26, "id": "iX-wXmWDLeM", "title": "よくある質問〜インスピレーションはどこから？〜", "duration": 134, "views": 4100, "category": "talk", "note": "", "url": "https://www.youtube.com/watch?v=iX-wXmWDLeM"}, {"i": 27, "id": "3m1Auj7VHpY", "title": "#BeautyofTravel w/ Huang Xuan 黄轩 - Shiseido Essential Energy", "duration": 61, "views": 3500, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=3m1Auj7VHpY"}, {"i": 28, "id": "z85_GlNFD8g", "title": "とにかくなにかをはじめよう | Let's Just Get It Started | 总之先开始行动起来吧", "duration": 113, "views": 28000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=z85_GlNFD8g"}, {"i": 29, "id": "sYFln0OgJLU", "title": "Handsome Mask 2010", "duration": 60, "views": 3400, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=sYFln0OgJLU"}, {"i": 30, "id": "8QIGQFU1F5s", "title": "Highlighting CHANELs Handcraft – Handbag Stories - CHANEL", "duration": 96, "views": 3000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=8QIGQFU1F5s"}, {"i": 31, "id": "jLMCqBZ4obM", "title": "CHANEL’s GABRIELLE bag animated film with Cara Delevingne (Director’s cut)", "duration": 67, "views": 10000, "category": "animation", "note": "女優出演の実写素材を含む可能性（アニメ以外を含む）", "url": "https://www.youtube.com/watch?v=jLMCqBZ4obM"}, {"i": 32, "id": "ceVosa_7IcM", "title": "\"A Better Life, A Better World \" Wonders! by Panasonic", "duration": 116, "views": 8900, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=ceVosa_7IcM"}, {"i": 33, "id": "h3s-jeOohW0", "title": "New Chitose Airport International Animation Festival 2017 PR Clip (FULL ver.)", "duration": 31, "views": 2700, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=h3s-jeOohW0"}, {"i": 34, "id": "aqqAImLyubA", "title": "Airbnb : Megumi's story", "duration": 61, "views": 2500, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=aqqAImLyubA"}, {"i": 35, "id": "0-GSigSbxDI", "title": "MTV IDENT by ShiShi Yamazaki", "duration": 16, "views": 21000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=0-GSigSbxDI"}, {"i": 36, "id": "6Q08Aers-TE", "title": "DFS Exclusive: ULTIMUNE by Shiseido x Shishi", "duration": 36, "views": 2600, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=6Q08Aers-TE"}, {"i": 37, "id": "gsQuyDa8Kgk", "title": "L'OFFICIEL UKRAINE Special Art Cover for June issue 2017", "duration": 11, "views": 619, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=gsQuyDa8Kgk"}, {"i": 38, "id": "tVTix8rxwgM", "title": "EST PINK BARGAIN 2017（Lucky Bag ver.）", "duration": 16, "views": 1700, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=tVTix8rxwgM"}, {"i": 39, "id": "tMXLq461Yjg", "title": "EST PINK BARGAIN 2017（Bargain ver.）", "duration": 16, "views": 1600, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=tMXLq461Yjg"}, {"i": 40, "id": "OB1g_29g43o", "title": "EST PINK BARGAIN / SUMMER 2016", "duration": 16, "views": 3000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=OB1g_29g43o"}, {"i": 41, "id": "_BRE9fIt8ak", "title": "WASEDAnce Animated Campus Tour 踊る！ 早稲田大学1分間キャンパスツアー", "duration": 75, "views": 7400, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=_BRE9fIt8ak"}, {"i": 42, "id": "RA8gnD-Uxl4", "title": "Open Reel Ensemble - 回・転・旅・行・記　with 七尾旅人 (Official Video)", "duration": 194, "views": 1900, "category": "uncertain", "note": "MV。実写/ロトスコープ混在の可能性", "url": "https://www.youtube.com/watch?v=RA8gnD-Uxl4"}, {"i": 43, "id": "wtRs2NcQiGY", "title": "LUMINE CARD 10%OFF CM 2016 SPRING", "duration": 16, "views": 8500, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=wtRs2NcQiGY"}, {"i": 44, "id": "vPFpXDsbGJE", "title": "LUMINE CARD 10%OFF CM 2015 SPRING", "duration": 16, "views": 6900, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=vPFpXDsbGJE"}, {"i": 45, "id": "6gsDKn36zEk", "title": "LUMINE CARD 10%OFF CM 2014 WINTER", "duration": 16, "views": 12000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=6gsDKn36zEk"}, {"i": 46, "id": "qJWG7rgDhdA", "title": "LUMINE CARD 10%OFF CM 2014 AUTUMN", "duration": 16, "views": 9900, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=qJWG7rgDhdA"}, {"i": 47, "id": "3wrS39IcnpY", "title": "LUMINE CARD 10%OFF CM 2014 SUMMER", "duration": 16, "views": 11000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=3wrS39IcnpY"}, {"i": 48, "id": "F0KacYCwV-0", "title": "YAMASUKI YAMAZAKI　やますき、やまざき", "duration": 143, "views": 23000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=F0KacYCwV-0"}, {"i": 49, "id": "CVuc19XOY7Y", "title": "Moonlit Night and Opal /月夜＆オパール", "duration": 202, "views": 3500, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=CVuc19XOY7Y"}, {"i": 50, "id": "PFvIjtV0__Y", "title": "ああ／良い　aaH / Hee", "duration": 133, "views": 3100, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=PFvIjtV0__Y"}, {"i": 51, "id": "RyF3MWsH1ns", "title": "個展「ししやまざきのおもしろ生ビデオ」会場のようす ShiShi's solo exhibition tour! Sep 17, 2013", "duration": 557, "views": 9600, "category": "documentary", "note": "個展の記録。作品映像が中心だが実写の会場映像を含む", "url": "https://www.youtube.com/watch?v=RyF3MWsH1ns"}, {"i": 52, "id": "NfTFqDw1gF4", "title": "[Trailer] YAMASUKI YAMAZAKI", "duration": 39, "views": 55000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=NfTFqDw1gF4"}, {"i": 53, "id": "tN_62MmQBqQ", "title": "YA-NE-SEN a Go Go", "duration": 88, "views": 202000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=tN_62MmQBqQ"}, {"i": 54, "id": "usUMSmvBri8", "title": "PARCO Part3 30th Anniversary \"Paradigm Paradise\"", "duration": 30, "views": 19000, "category": "animation", "note": "", "url": "https://www.youtube.com/watch?v=usUMSmvBri8"}];
+const LABEL = { animation:"アニメ", uncertain:"不確実", live:"実写/日常", tutorial:"制作/講座", talk:"トーク", promo:"告知", documentary:"記録" };
+const KEY = "shishi-review-v1";
+let picked = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
+let filter = "animation";
+let query = "";
+let onlyPicked = false;
+
+const grid = document.getElementById("grid");
+
+function fmtDur(s) { const m = Math.floor(s/60), r = s%60; return m + ":" + String(r).padStart(2,"0"); }
+function save() { localStorage.setItem(KEY, JSON.stringify([...picked])); }
+function esc(s) { return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function visible() {
+  return ITEMS.filter(it => {
+    if (filter === "animation" && it.category !== "animation") return false;
+    if (filter === "uncertain" && it.category !== "uncertain") return false;
+    if (onlyPicked && !picked.has(it.id)) return false;
+    if (query && !(it.title + " " + it.id).toLowerCase().includes(query)) return false;
+    return true;
+  });
+}
+
+function render() {
+  const list = visible();
+  grid.innerHTML = "";
+  if (!list.length) { grid.innerHTML = '<div class="empty">' + (onlyPicked ? '選択がありません。カードの「候補」にチェックしてください。' : '該当なし') + '</div>'; }
+  for (const it of list) {
+    const card = document.createElement("article");
+    card.className = "card" + (picked.has(it.id) ? " picked" : "");
+    card.innerHTML = `
+      <div class="thumb" data-play="${it.id}">
+        <img loading="lazy" src="https://i.ytimg.com/vi/${it.id}/hqdefault.jpg" alt="">
+        <div class="play">▶</div>
+        <div class="dur">${fmtDur(it.duration)}</div>
+      </div>
+      <div class="body">
+        <div class="title">${esc(it.title)}</div>
+        <div class="meta">
+          <span class="badge ${it.category}">${LABEL[it.category] || it.category}</span>
+          <span>${it.views.toLocaleString()} views</span>
+          <span>#${String(it.i).padStart(2,"0")}</span>
+        </div>
+        ${it.note ? `<div class="note">${esc(it.note)}</div>` : ""}
+        <div class="row">
+          <label class="pick"><input type="checkbox" ${picked.has(it.id) ? "checked" : ""} data-pick="${it.id}"> 候補</label>
+          <a href="${it.url}" target="_blank" rel="noreferrer">YouTube で開く</a>
+          <a href="https://www.youtube.com/watch?v=${it.id}&t=0s" target="_blank" rel="noreferrer">新しいタブ</a>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  }
+  document.getElementById("shown").textContent = list.length + " 本";
+  document.getElementById("count").textContent = picked.size;
+}
+
+grid.addEventListener("click", e => {
+  const thumb = e.target.closest("[data-play]");
+  if (!thumb) return;
+  const id = thumb.dataset.play;
+  if (thumb.querySelector("iframe")) return;
+  thumb.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+});
+
+grid.addEventListener("change", e => {
+  const box = e.target.closest("[data-pick]");
+  if (!box) return;
+  const id = box.dataset.pick;
+  if (box.checked) picked.add(id); else picked.delete(id);
+  box.closest(".card").classList.toggle("picked", box.checked);
+  document.getElementById("count").textContent = picked.size;
+  save();
+  if (onlyPicked && !box.checked) render();
+});
+
+for (const b of document.querySelectorAll("[data-view]")) {
+  b.addEventListener("click", () => {
+    const v = b.dataset.view;
+    document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("active", x === b));
+    grid.className = "view-" + v;
+    localStorage.setItem("shishi-view-v1", v);
+  });
+}
+const savedView = localStorage.getItem("shishi-view-v1") || "grid";
+grid.className = "view-" + savedView;
+document.querySelectorAll("[data-view]").forEach(x => x.classList.toggle("active", x.dataset.view === savedView));
+
+for (const b of document.querySelectorAll("[data-filter]")) {
+  b.addEventListener("click", () => {
+    filter = b.dataset.filter;
+    document.querySelectorAll("[data-filter]").forEach(x => x.classList.toggle("active", x === b));
+    render();
+  });
+}
+
+document.getElementById("q").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); render(); });
+
+document.getElementById("onlyPicked").addEventListener("change", e => { onlyPicked = e.target.checked; render(); });
+
+document.getElementById("clear").addEventListener("click", () => { picked.clear(); save(); render(); });
+
+function yamlFor(ids) {
+  const chosen = ITEMS.filter(it => ids.includes(it.id));
+  const lines = ["# 選択した候補。権利確認後に permission_status を approved へ変更する。", "videos:"];
+  for (const it of chosen) {
+    lines.push(`  # ${it.title} (${it.url})`);
+    lines.push(`  - video_id: ${it.id}`);
+    lines.push(`    source_url: ${it.url}`);
+    lines.push(`    local_path: data/local-videos/${it.id}.mp4`);
+    lines.push(`    creator_or_rights_holder: ""`);
+    lines.push(`    terms_url: ""`);
+    lines.push(`    rights_basis: ""`);
+    lines.push(`    permitted_uses: []`);
+    lines.push(`    permission_status: pending`);
+    lines.push(`    reviewed_by: ""`);
+    lines.push(`    reviewed_at: ""`);
+    lines.push(`    notes: "視聴して候補化。権利範囲は未確認"`);
+  }
+  return lines.join("\n");
+}
+
+function show(text) {
+  const out = document.getElementById("out");
+  out.textContent = text;
+  out.style.display = "block";
+  navigator.clipboard?.writeText(text).catch(() => {});
+}
+
+document.getElementById("export").addEventListener("click", () => {
+  if (!picked.size) return show("# 何も選択されていません");
+  show(yamlFor([...picked]));
+});
+document.getElementById("exportJson").addEventListener("click", () => {
+  const chosen = ITEMS.filter(it => picked.has(it.id));
+  show(JSON.stringify(chosen, null, 2));
+});
+
+render();
+</script>
+</body>
+</html>

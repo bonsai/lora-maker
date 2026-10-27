@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shishi VLM Review — Static View</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+:root{--bg:#0f1116;--card:#181b23;--line:#2a2f3a;--fg:#e8eaf0;--dim:#9aa3b2;--accent:#ff5d8f;--ok:#39d98a;--info:#7cc4ff;--warn:#ffd166;--danger:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{position:sticky;top:0;z-index:10;background:rgba(15,17,22,.96);border-bottom:1px solid var(--line);padding:10px 16px;backdrop-filter:blur(8px);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+h1{margin:0;font-size:15px}
+main{padding:14px 16px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px}
+.fcard{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.fcard img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;cursor:pointer}
+.fcard .scorer{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.75);padding:2px 6px;border-radius:4px;font-size:11px;color:var(--warn)}
+.fcard .scorer.good{color:var(--ok)}.fcard .scorer.bad{color:var(--danger)}
+.fmeta{padding:6px 8px;font-size:11px;color:var(--dim)}
+.fmeta .tag{display:inline-block;background:rgba(124,196,255,.12);color:var(--info);padding:1px 6px;border-radius:4px;margin-right:4px;font-size:10px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;justify-content:center;align-items:center;padding:20px}
+.overlay.active{display:flex}.obox{background:var(--card);border:1px solid var(--line);border-radius:10px;max-width:90vw;max-height:90vh;overflow:auto;padding:14px}
+.obox img{max-width:100%;max-height:70vh;border-radius:6px;display:block}
+.obox .meta{margin-top:8px;font-size:12px;white-space:pre-wrap}
+.close{position:absolute;top:10px;right:14px;font-size:22px;color:var(--fg);cursor:pointer;background:transparent;border:0}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input,select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:12px}
+.statbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.statcard{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:120px}
+.statcard b{display:block;font-size:18px}
+.statcard span{color:var(--dim);font-size:11px}
+.chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.chart-box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+th{background:var(--card);color:var(--dim);position:sticky;top:0}
+td img{width:60px;height:35px;object-fit:cover;border-radius:3px;cursor:pointer}
+.empty{color:var(--dim);padding:30px;text-align:center}
+.tabs{display:flex;gap:3px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px;margin-bottom:12px}
+.tabs button{border:none;background:transparent;padding:5px 12px;border-radius:4px;font-size:12px;color:var(--fg);cursor:pointer}
+.tabs button.active{background:var(--accent);color:#fff}
+.panel{display:none}.panel.active{display:block}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎨 Shishi VLM Review — Static View</h1>
+</header>
+
+<main>
+  <div class="tabs">
+    <button data-tab="explorer" class="active">🔍 Explorer</button>
+    <button data-tab="analytics">📈 Analytics</button>
+    <button data-tab="table">📋 Table</button>
+  </div>
+
+  <div class="statbar" id="statbar"></div>
+
+  <div id="panel-explorer" class="panel active">
+    <div class="controls">
+      <input type="search" id="q" placeholder="Search filename / caption..." style="width:260px">
+      <label style="color:var(--dim);font-size:11px"><input type="checkbox" id="onlyCap" checked> Caption only</label>
+      <select id="catFilter"><option value="">All categories</option></select>
+      <select id="sortBy"><option value="id">Sort: ID</option><option value="suit-desc">Suitability ↓</option><option value="suit-asc">Suitability ↑</option><option value="name">Filename</option></select>
+      <span id="expCount" class="loading"></span>
+    </div>
+    <div id="explorerContent"></div>
+  </div>
+
+  <div id="panel-analytics" class="panel">
+    <div class="chart-row">
+      <div class="chart-box"><div id="chart-categories"></div></div>
+      <div class="chart-box"><div id="chart-distribution"></div></div>
+    </div>
+    <div class="chart-box"><div id="chart-axes" style="height:300px"></div></div>
+    <div class="chart-box"><div id="chart-radar" style="height:360px"></div></div>
+  </div>
+
+  <div id="panel-table" class="panel">
+    <table id="dataTable"><thead><tr><th>#</th><th>Thumb</th><th>File</th><th>Suit</th><th>Category</th><th>Subject</th><th>Notes</th></tr></thead><tbody></tbody></table>
+  </div>
+</main>
+
+<div class="overlay" id="overlay" onclick="if(event.target.id==='overlay')closeOverlay()">
+  <button class="close" onclick="closeOverlay()">×</button>
+  <div class="obox">
+    <img id="oimg" src="" alt="">
+    <div class="meta" id="ometa"></div>
+  </div>
+</div>
+
+<script>
+// ─── Embedded data (injected at build time) ───
+const FRAMES = __FRAMES_JSON__;
+const STATS = __STATS_JSON__;
+
+// ─── Helpers ───
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":"'"}[c]))}
+function mediaPath(f){return `../shishi/images-shishi/${esc(f.filename)}`;}
+
+// ─── Stats bar ───
+function renderStats(){
+  const s=STATS||{};
+  document.getElementById('statbar').innerHTML=`
+    <div class="statcard"><b>${s.total||FRAMES.length}</b><span>Total Frames</span></div>
+    <div class="statcard"><b style="color:var(--accent)">${s.reviewed||FRAMES.filter(f=>f.training_suitability!=null).length}</b><span>Reviewed</span></div>
+    <div class="statcard"><b style="color:${(s.avg_suit||0)>=7?'var(--ok)':'var(--warn)'}">${s.avg_suit??'-'}</b><span>Avg Suitability</span></div>
+    <div class="statcard"><b>${s.min_suit??'-'}</b><span>Min</span></div>
+    <div class="statcard"><b>${s.max_suit??'-'}</b><span>Max</span></div>
+  `;
+}
+
+// ─── Explorer ───
+function loadExplorer(){
+  const q=document.getElementById('q').value.trim().toLowerCase();
+  const onlyCap=document.getElementById('onlyCap').checked;
+  const cat=document.getElementById('catFilter').value;
+  const sort=document.getElementById('sortBy').value;
+
+  let list=FRAMES.filter(f=>{
+    if(onlyCap && !f.caption_text) return false;
+    if(cat && f.category!==cat) return false;
+    if(q){
+      const hay=(f.filename+(f.caption_text||'')+(f.subject||'')+(f.vlm_notes||'')).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  switch(sort){
+    case 'suit-desc': list.sort((a,b)=>(b.training_suitability||-1)-(a.training_suitability||-1)); break;
+    case 'suit-asc': list.sort((a,b)=>(a.training_suitability||99)-(b.training_suitability||99)); break;
+    case 'name': list.sort((a,b)=>a.filename.localeCompare(b.filename)); break;
+  }
+
+  document.getElementById('expCount').textContent = `${list.length} / ${FRAMES.length} frames`;
+
+  const grid=document.createElement('div'); grid.className='fgrid';
+  if(!list.length){ grid.innerHTML='<div class="empty">No frames match</div>'; }
+  for(const f of list){
+    const suit=f.training_suitability;
+    const suitCls=suit==null?'':(suit>=7?'good':(suit<6?'bad':''));
+    const card=document.createElement('div'); card.className='fcard';
+    card.innerHTML=`
+      <img src="${mediaPath(f)}" loading="lazy" onclick="openOverlay('${mediaPath(f)}',\`${esc(f.caption_text||f.filename)}\`,${JSON.stringify(f)})">
+      ${suit!=null?`<div class="scorer ${suitCls}">${suit}/10</div>`:''}
+      <div class="fmeta">
+        <div>${esc(f.filename)}</div>
+        ${f.caption_text?`<div style="margin-top:3px;font-size:10px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.caption_text)}</div>`:''}
+        ${f.category?`<div style="margin-top:4px"><span class="tag">${esc(f.category)}</span></div>`:''}
+      </div>`;
+    grid.appendChild(card);
+  }
+  document.getElementById('explorerContent').innerHTML=''; document.getElementById('explorerContent').appendChild(grid);
+}
+
+// ─── Analytics charts ───
+function renderAnalytics(){
+  const reviewed=FRAMES.filter(f=>f.training_suitability!=null);
+  if(!reviewed.length) return;
+
+  // Categories pie
+  const catMap={};
+  reviewed.forEach(f=>{ const c=f.category||'uncategorized'; catMap[c]=(catMap[c]||0)+1; });
+  Plotly.newPlot('chart-categories', [{
+    type:'pie', labels:Object.keys(catMap), values:Object.values(catMap), hole:.45,
+    marker:{colors:['#ff5d8f','#7cc4ff','#39d98a','#ffd166','#ff6b6b','#a78bfa']},
+    textinfo:'label+percent', hoverinfo:'label+value+percent'
+  }], {paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#9aa3b2',size:11},margin:{t:30,b:10,l:10,r:10},showlegend:false},{displayModeBar:false});
+
+  // Distribution bar
+  const distMap={};
+  reviewed.forEach(f=>{ const s=f.training_suitability; distMap[s]=(distMap[s]||0)+1; });
+  const sorted=Object.entries(distMap).sort((a,b)=>a[0]-b[0]);
+  Plotly.newPlot('chart-distribution', [{
+    type:'bar', x:sorted.map(r=>r[0]), y:sorted.map(r=>r[1]),
+    marker:{color:sorted.map(r=>r[0]>=7?'#39d98a':r[0]>=5?'#ffd166':'#ff6b6b')}
+  }], {paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#9aa3b2',size:11},margin:{t:30,b:30,l:40,r:10},xaxis:{title:'Suitability',dtick:1},yaxis:{title:'Frames'},bargap:0.3},{displayModeBar:false});
+
+  // Score axes
+  const axes=['linework','contrast','composition','artifact_free','shishi_style'];
+  const axisData=axes.map(ax=>{
+    const scores=reviewed.map(f=>f.lora_quality?.[ax]).filter(v=>v!=null);
+    return {axis:ax, avg:scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0, count:scores.length};
+  }).filter(d=>d.count>0);
+  Plotly.newPlot('chart-axes', [{
+    type:'bar', x:axisData.map(d=>d.axis), y:axisData.map(d=>d.avg.toFixed(2)),
+    marker:{color:axisData.map(d=>d.avg>=7?'#39d98a':d.avg>=5?'#ffd166':'#ff6b6b')},
+    text:axisData.map(d=>d.avg.toFixed(1)), textposition:'outside'
+  }], {paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#9aa3b2',size:12},margin:{t:30,b:60,l:40,r:20},xaxis:{tickangle:-30},yaxis:{range:[0,10],title:'Avg Score'}},{displayModeBar:false});
+
+  // Radar
+  Plotly.newPlot('chart-radar', [{
+    type:'scatterpolar', r:[...axisData.map(d=>d.avg),axisData[0]?.avg],
+    theta:[...axisData.map(d=>d.axis),axisData[0]?.axis], fill:'toself',
+    marker:{color:'#ff5d8f'}, fillcolor:'rgba(255,93,143,.25)'
+  }], {polar:{radialaxis:{visible:true,range:[0,10]}},paper_bgcolor:'transparent',font:{color:'#9aa3b2',size:12},margin:{t:40,b:30,l:40,r:40}},{displayModeBar:false});
+}
+
+// ─── Table view ───
+function renderTable(){
+  const reviewed=FRAMES.filter(f=>f.training_suitability!=null);
+  const tbody=document.querySelector('#dataTable tbody');
+  tbody.innerHTML='';
+  for(const f of reviewed){
+    const tr=document.createElement('tr');
+    const suit=f.training_suitability;
+    const suitColor=suit>=7?'var(--ok)':suit>=5?'var(--warn)':'var(--danger)';
+    tr.innerHTML=`
+      <td>${f.id}</td>
+      <td><img src="${mediaPath(f)}" onclick="openOverlay('${mediaPath(f)}','',${JSON.stringify(f)})"></td>
+      <td>${esc(f.filename)}</td>
+      <td style="color:${suitColor}">${suit}</td>
+      <td>${esc(f.category||'—')}</td>
+      <td>${esc((f.subject||'').substring(0,60))}</td>
+      <td>${esc((f.vlm_notes||'').substring(0,120))}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// ─── Category filter options ───
+function populateCatFilter(){
+  const cats=[...new Set(FRAMES.map(f=>f.category).filter(Boolean))].sort();
+  document.getElementById('catFilter').innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+}
+
+// ─── Overlay ───
+function openOverlay(src, caption, frame){
+  document.getElementById('oimg').src=src;
+  let html=caption||'';
+  const f=typeof frame==='string'?JSON.parse(frame):frame;
+  if(f){
+    html+='\n\n——\n';
+    html+=`File: ${f.filename}\n`;
+    if(f.subject) html+=`Subject: ${f.subject}\n`;
+    if(f.category) html+=`Category: ${f.category}\n`;
+    if(f.training_suitability!=null) html+=`Suitability: ${f.training_suitability}/10\n`;
+    if(f.lora_quality){
+      html+='\nScores:\n';
+      for(const [k,v] of Object.entries(f.lora_quality)) html+=`  ${k}: ${v}/10\n`;
+    }
+    if(f.vlm_notes) html+=`\nNotes: ${f.vlm_notes}`;
+  }
+  document.getElementById('ometa').textContent=html;
+  document.getElementById('overlay').classList.add('active');
+}
+function closeOverlay(){document.getElementById('overlay').classList.remove('active');}
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeOverlay();});
+
+// ─── Tabs ───
+document.querySelectorAll('.tabs button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id==='panel-'+b.dataset.tab));
+    if(b.dataset.tab==='analytics') renderAnalytics();
+    if(b.dataset.tab==='table') renderTable();
+  });
+});
+
+// ─── Events ───
+document.getElementById('q').addEventListener('input',loadExplorer);
+document.getElementById('onlyCap').addEventListener('change',loadExplorer);
+document.getElementById('catFilter').addEventListener('change',loadExplorer);
+document.getElementById('sortBy').addEventListener('change',loadExplorer);
+
+// ─── Init ───
+renderStats();
+populateCatFilter();
+loadExplorer();
+</script>
+</body>
+</html>

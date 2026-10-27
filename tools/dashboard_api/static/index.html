@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset Dashboard — Unified VLM Explorer</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+:root{--bg:#0f1116;--card:#181b23;--line:#2a2f3a;--fg:#e8eaf0;--dim:#9aa3b2;--accent:#ff5d8f;--ok:#39d98a;--info:#7cc4ff;--warn:#ffd166;--danger:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--info);text-decoration:none}
+header{position:sticky;top:0;z-index:10;background:rgba(15,17,22,.96);border-bottom:1px solid var(--line);padding:10px 16px;backdrop-filter:blur(8px);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+h1{margin:0;font-size:15px}
+.header-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+select,input,button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:12px}
+button{cursor:pointer}button.active{border-color:var(--accent);color:var(--accent)}
+.tabs{display:flex;gap:3px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px}
+.tabs button{border:none;background:transparent;padding:5px 12px;border-radius:4px;font-size:12px}
+.tabs button.active{background:var(--accent);color:#fff}
+main{padding:14px 16px}
+.panel{display:none}.panel.active{display:block}
+/* Cards */
+.statbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.statcard{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:120px}
+.statcard b{display:block;font-size:18px;color:var(--ok);margin-bottom:2px}
+.statcard span{color:var(--dim);font-size:11px}
+/* Charts */
+.chart-box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:14px}
+.chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+/* Frame grid */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:10px}
+.fcard{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.fcard img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;cursor:pointer}
+.fcard .scorer{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.75);padding:2px 6px;border-radius:4px;font-size:11px;color:var(--warn)}
+.fcard .scorer.good{color:var(--ok)}.fcard .scorer.bad{color:var(--danger)}
+.fmeta{padding:6px 8px;font-size:11px;color:var(--dim)}
+.fmeta .tag{display:inline-block;background:rgba(124,196,255,.12);color:var(--info);padding:1px 6px;border-radius:4px;margin-right:4px;font-size:10px}
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+th{background:var(--card);color:var(--dim);position:sticky;top:0}
+tr:hover td{background:rgba(255,255,255,.03)}
+td img{width:60px;height:35px;object-fit:cover;border-radius:3px;cursor:pointer}
+.pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:14px 0}
+/* Overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:50;justify-content:center;align-items:center;padding:20px}
+.overlay.active{display:flex}.obox{background:var(--card);border:1px solid var(--line);border-radius:10px;max-width:90vw;max-height:90vh;overflow:auto;padding:14px}
+.obox img{max-width:100%;max-height:70vh;border-radius:6px;display:block}
+.obox .meta{margin-top:8px;font-size:12px}.close{position:absolute;top:10px;right:14px;font-size:22px;color:var(--fg);cursor:pointer;background:transparent;border:0}
+/* utils */
+.empty{color:var(--dim);padding:30px;text-align:center}.loading{color:var(--dim);padding:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎛️ Asset Dashboard</h1>
+  <div class="header-right">
+    <select id="projectSelect"></select>
+    <div class="tabs" id="tabBar">
+      <button data-tab="overview" class="active">📊 Overview</button>
+      <button data-tab="explorer">🔍 Explorer</button>
+      <button data-tab="vlm">📈 VLM Analytics</button>
+      <button data-tab="videos">🎬 Videos</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="panel-overview" class="panel active">
+    <div class="statbar" id="statbar"></div>
+    <div class="chart-row">
+      <div class="chart-box"><div id="chart-categories"></div></div>
+      <div class="chart-box"><div id="chart-distribution"></div></div>
+    </div>
+    <div class="chart-box"><div id="chart-axes" style="height:340px"></div></div>
+  </div>
+
+  <div id="panel-explorer" class="panel">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <input type="search" id="q" placeholder="Search filename / caption..." style="width:240px">
+      <label style="color:var(--dim);font-size:11px"><input type="checkbox" id="onlyCap" checked> Caption only</label>
+      <select id="videoFilter" style="display:none"><option value="">All videos</option></select>
+      <button onclick="loadExplorer(1)">Refresh</button>
+      <span class="loading" id="expCount"></span>
+    </div>
+    <div id="explorerContent"></div>
+  </div>
+
+  <div id="panel-vlm" class="panel">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <button onclick="renderRadar()">🔄 Radar</button>
+      <button onclick="renderLowQuality()">⚠️ Low Quality (<6)</button>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><div id="chart-radar"></div></div>
+      <div class="chart-box"><div id="chart-scatter"></div></div>
+    </div>
+    <div id="lowQualityList"></div>
+  </div>
+
+  <div id="panel-videos" class="panel">
+    <div id="videoPanel"></div>
+  </div>
+</main>
+
+<div class="overlay" id="overlay" onclick="if(event.target.id==='overlay')closeOverlay()">
+  <button class="close" onclick="closeOverlay()">×</button>
+  <div class="obox">
+    <img id="oimg" src="" alt="">
+    <div class="meta" id="ometa"></div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin + '/api';
+let projects = [];
+let currentProject = null;
+let currentTab = 'overview';
+let summaryCache = {};
+
+async function get(path){ const r=await fetch(API+path); if(!r.ok) throw new Error(r.status); return r.json(); }
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#x27;'}[c]))}
+
+/* Init */
+async function init(){
+  const data = await get('/projects');
+  projects = data.projects;
+  const sel = document.getElementById('projectSelect');
+  sel.innerHTML = projects.map(p=>`<option value="${p.id}">${esc(p.label)}</option>`).join('');
+  sel.addEventListener('change', ()=>{ currentProject=+sel.value; changeProject(); });
+  currentProject = projects[0]?.id || 1;
+  changeProject();
+}
+
+async function changeProject(){
+  summaryCache = await get(`/projects/${currentProject}/summary`);
+  if(currentTab==='overview') renderOverview();
+  else if(currentTab==='explorer') loadExplorer(1);
+  else if(currentTab==='vlm') renderVlmAnalytics();
+  else if(currentTab==='videos') renderVideos();
+
+  // Toggle video filter visibility
+  document.getElementById('videoFilter').style.display = (currentProject===2)?'inline-block':'none';
+}
+
+/* Tabs */
+document.getElementById('tabBar').addEventListener('click', e=>{
+  const b=e.target.closest('[data-tab]'); if(!b) return;
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id==='panel-'+b.dataset.tab));
+  currentTab=b.dataset.tab;
+  changeProject();
+});
+
+/* Overview */
+function renderOverview(){
+  const s=summaryCache.stats||{};
+  const st=document.getElementById('statbar');
+  st.innerHTML=`
+    <div class="statcard"><b>${s.total_frames||0}</b><span>Total Frames</span></div>
+    <div class="statcard"><b style="color:var(--info)">${s.captioned_frames||0}</b><span>Captioned</span></div>
+    <div class="statcard"><b style="color:var(--accent)">${s.reviewed_frames||0}</b><span>VLM Reviewed</span></div>
+    <div class="statcard"><b style="color:${(s.avg_suitability||0)>=7?'var(--ok)':'var(--warn)'}">${s.avg_suitability??'—'}</b><span>Avg Suitability</span></div>
+    <div class="statcard"><b>${s.min_suitability??'—'}</b><span>Min Suit</span></div>
+    <div class="statcard"><b>${s.max_suitability??'—'}</b><span>Max Suit</span></div>
+  `;
+  renderCategoryChart();
+  renderDistributionChart();
+  renderAxesChart();
+}
+
+async function renderCategoryChart(){
+  const data = await get(`/projects/${currentProject}/vlm/categories`);
+  const cats = data.categories;
+  if(!cats.length){ Plotly.purge('chart-categories'); document.getElementById('chart-categories').innerHTML='<div class="empty">No VLM data</div>'; return; }
+  Plotly.newPlot('chart-categories', [{
+    type:'pie', labels: cats.map(c=>c.category||'uncategorized'), values: cats.map(c=>c.count),
+    hole:.45, marker:{colors:['#ff5d8f','#7cc4ff','#39d98a','#ffd166','#ff6b6b','#a78bfa']},
+    textinfo:'label+percent', hoverinfo:'label+value+percent'
+  }], {paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9aa3b2',size:11}, margin:{t:30,b:10,l:10,r:10}, showlegend:false}, {displayModeBar:false});
+}
+
+async function renderDistributionChart(){
+  const data = await get(`/projects/${currentProject}/vlm/distribution`);
+  const d = data.distribution;
+  if(!d.length){ Plotly.purge('chart-distribution'); document.getElementById('chart-distribution').innerHTML='<div class="empty">No VLM data</div>'; return; }
+  const sorted = [...d].sort((a,b)=>(a.training_suitability||0)-(b.training_suitability||0));
+  Plotly.newPlot('chart-distribution', [{
+    type:'bar', x: sorted.map(r=>r.training_suitability??'?'), y: sorted.map(r=>r.count),
+    marker:{color: sorted.map(r=> (r.training_suitability>=7? '#39d98a': r.training_suitability>=5? '#ffd166':'#ff6b6b'))}
+  }], {paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9aa3b2',size:11}, margin:{t:30,b:30,l:40,r:10}, xaxis:{title:'Training Suitability',dtick:1}, yaxis:{title:'Frames'}, bargap:0.3}, {displayModeBar:false});
+}
+
+async function renderAxesChart(){
+  const data = await get(`/projects/${currentProject}/vlm/score-axes`);
+  const a = data.axes;
+  if(!a.length){ Plotly.purge('chart-axes'); document.getElementById('chart-axes').innerHTML='<div class="empty">No VLM score data</div>'; return; }
+  Plotly.newPlot('chart-axes', [{
+    type:'bar', x: a.map(r=>r.axis), y: a.map(r=>r.avg_score),
+    marker:{color: a.map(r=>r.avg_score>=7?'#39d98a':r.avg_score>=5?'#ffd166':'#ff6b6b')},
+    text: a.map(r=>r.avg_score), textposition:'outside'
+  }], {paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9aa3b2',size:12}, margin:{t:30,b:60,l:40,r:20}, xaxis:{tickangle:-30}, yaxis:{range:[0,10],title:'Avg Score'}}, {displayModeBar:false});
+}
+
+/* Explorer */
+async function loadExplorer(page=1){
+  const q=document.getElementById('q').value.trim();
+  const onlyCap=document.getElementById('onlyCap').checked;
+  const vid=document.getElementById('videoFilter').value;
+  let url=`/projects/${currentProject}/frames?page=${page}&limit=48`;
+  if(q) url+=`&q=${encodeURIComponent(q)}`;
+  if(onlyCap) url+=`&has_caption=true`;
+  if(vid) url+=`&video_id=${encodeURIComponent(vid)}`;
+  document.getElementById('explorerContent').innerHTML='<div class="loading">Loading...</div>';
+  const data = await get(url);
+  document.getElementById('expCount').textContent = `${data.total} frames (page ${data.page}/${data.pages})`;
+
+  // Populate video filter if empty and shishi
+  if(currentProject===2 && document.getElementById('videoFilter').options.length<=1){
+    const vids = [...new Set(data.frames.map(f=>f.video_id).filter(Boolean))];
+    document.getElementById('videoFilter').innerHTML = '<option value="">All videos</option>' + vids.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  }
+
+  const grid = document.createElement('div'); grid.className='fgrid';
+  if(!data.frames.length){ grid.innerHTML='<div class="empty">No frames</div>'; }
+  for(const f of data.frames){
+    const mediaPath = `/media/${currentProject===1?'hokusai/data/images-resized-720/':'shishi/images-shishi/'}${esc(f.filename)}`;
+    const suit = f.training_suitability;
+    const suitCls = suit==null?'':(suit>=7?'good':(suit<6?'bad':''));
+    const card = document.createElement('div'); card.className='fcard';
+    card.innerHTML = `
+      <img src="${mediaPath}" loading="lazy" onclick="openOverlay('${mediaPath}','${esc(f.caption_text||f.filename)}',${suit??'null'})">
+      ${suit!=null?`<div class="scorer ${suitCls}">${suit}/10</div>`:''}
+      <div class="fmeta">
+        <div>${esc(f.filename)}</div>
+        ${f.caption_text?`<div style="margin-top:3px;font-size:10px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${esc(f.caption_text)}</div>`:''}
+        ${f.category?`<div style="margin-top:4px"><span class="tag">${esc(f.category)}</span></div>`:''}
+      </div>`;
+    grid.appendChild(card);
+  }
+  const wrap=document.createElement('div'); wrap.appendChild(grid);
+  if(data.pages>1){
+    const p=document.createElement('div'); p.className='pager';
+    if(data.page>1){ const btn=document.createElement('button'); btn.textContent='← Prev'; btn.onclick=()=>loadExplorer(data.page-1); p.appendChild(btn); }
+    const info=document.createElement('span'); info.textContent=`Page ${data.page} / ${data.pages}`; p.appendChild(info);
+    if(data.page<data.pages){ const btn=document.createElement('button'); btn.textContent='Next →'; btn.onclick=()=>loadExplorer(data.page+1); p.appendChild(btn); }
+    wrap.appendChild(p);
+  }
+  document.getElementById('explorerContent').innerHTML=''; document.getElementById('explorerContent').appendChild(wrap);
+}
+document.getElementById('q').addEventListener('input', ()=>loadExplorer(1));
+document.getElementById('onlyCap').addEventListener('change', ()=>loadExplorer(1));
+document.getElementById('videoFilter').addEventListener('change', ()=>loadExplorer(1));
+
+/* VLM Analytics */
+async function renderVlmAnalytics(){
+  renderRadar();
+  renderScatter();
+  renderLowQuality();
+}
+
+async function renderRadar(){
+  const data = await get(`/projects/${currentProject}/vlm/score-axes`);
+  const a = data.axes;
+  if(!a.length){ document.getElementById('chart-radar').innerHTML='<div class="empty">No VLM data</div>'; return; }
+  Plotly.newPlot('chart-radar', [{
+    type:'scatterpolar', r: [...a.map(x=>x.avg_score), a[0].avg_score],
+    theta: [...a.map(x=>x.axis), a[0].axis], fill:'toself',
+    marker:{color:'#ff5d8f'}, fillcolor:'rgba(255,93,143,.25)'
+  }], {polar:{radialaxis:{visible:true,range:[0,10]}}, paper_bgcolor:'transparent', font:{color:'#9aa3b2',size:12}, margin:{t:40,b:30,l:40,r:40}}, {displayModeBar:false});
+}
+
+async function renderScatter(){
+  // Training suitability vs frame index across all reviewed frames
+  const data = await get(`/projects/${currentProject}/frames?limit=200`);
+  const reviewed = data.frames.filter(f=>f.training_suitability!=null);
+  if(!reviewed.length){ document.getElementById('chart-scatter').innerHTML='<div class="empty">No VLM data</div>'; return; }
+  Plotly.newPlot('chart-scatter', [{
+    type:'scatter', mode:'markers', x: reviewed.map((f,i)=>i), y: reviewed.map(f=>f.training_suitability),
+    marker:{size:8, color: reviewed.map(f=>f.training_suitability>=7?'#39d98a':f.training_suitability>=5?'#ffd166':'#ff6b6b'), opacity:.7}
+  }], {paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9aa3b2',size:11}, margin:{t:30,b:40,l:40,r:10}, xaxis:{title:'Frame index'}, yaxis:{title:'Suitability',range:[0,10]}}, {displayModeBar:false});
+}
+
+async function renderLowQuality(){
+  const data = await get(`/projects/${currentProject}/frames?limit=200&has_caption=true`);
+  const bad = data.frames.filter(f=>f.training_suitability!=null && f.training_suitability<6);
+  const el = document.getElementById('lowQualityList');
+  if(!bad.length){ el.innerHTML='<div class="empty">No low-quality frames</div>'; return; }
+  const table = document.createElement('table');
+  table.innerHTML = '<thead><tr><th>Image</th><th>File</th><th>Suitability</th><th>Category</th><th>VLM Notes</th></tr></thead><tbody></tbody>';
+  const tbody = table.querySelector('tbody');
+  for(const f of bad){
+    const mediaPath = `/media/${currentProject===1?'hokusai/data/images-resized-720/':'shishi/images-shishi/'}${esc(f.filename)}`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><img src="${mediaPath}" onclick="openOverlay('${mediaPath}','${esc(f.vlm_notes||'')}',${f.training_suitability})"></td><td>${esc(f.filename)}</td><td style="color:var(--danger)">${f.training_suitability}</td><td>${esc(f.category||'—')}</td><td>${esc((f.vlm_notes||'').substring(0,120))}</td>`;
+    tbody.appendChild(tr);
+  }
+  el.innerHTML='<h3 style="font-size:13px;margin:10px 0">⚠️ Low Quality Frames (<6/10)</h3>'; el.appendChild(table);
+}
+
+/* Videos (Shishi only) */
+async function renderVideos(){
+  const el = document.getElementById('videoPanel');
+  if(currentProject!==1){ el.innerHTML='<div class="empty">Video tracking is Shishi-only</div>'; return; }
+  const sum = summaryCache;
+  if(!sum.videos || !sum.videos.length){ el.innerHTML='<div class="empty">No video metadata</div>'; return; }
+  const grid = document.createElement('div'); grid.style.display='grid'; grid.style.gridTemplateColumns='repeat(auto-fill,minmax(260px,1fr))'; grid.style.gap='12px';
+  for(const v of sum.videos){
+    const card = document.createElement('div'); card.style.cssText='background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px';
+    card.innerHTML = `
+      <div style="font-weight:600;font-size:12px;margin-bottom:4px">${esc(v.title||v.video_id)}</div>
+      <div style="color:var(--dim);font-size:11px">ID: ${esc(v.video_id)}</div>
+      <div style="color:var(--dim);font-size:11px">Status: <span style="color:${v.permission_status==='approved'?'var(--ok)':'var(--warn)'})">${esc(v.permission_status)}</span></div>
+      <div style="color:var(--dim);font-size:11px">Rights: ${esc(v.rights_basis||'—')}</div>
+      <div style="margin-top:6px;font-size:11px">🖼 Frames: ${v.frame_count||'—'} | 💾 ${v.local_video_path?'✅ DL':'❌ missing'}</div>
+    `;
+    grid.appendChild(card);
+  }
+  el.innerHTML=''; el.appendChild(grid);
+}
+
+/* Overlay */
+function openOverlay(src, caption, suit=null){
+  document.getElementById('oimg').src = src;
+  let html = esc(caption);
+  if(suit!=null){ html += `<br><br><b style="color:${suit>=7?'var(--ok)':suit>=5?'var(--warn)':'var(--danger)'}">Suitability: ${suit}/10</b>`; }
+  document.getElementById('ometa').innerHTML = html;
+  document.getElementById('overlay').classList.add('active');
+}
+function closeOverlay(){ document.getElementById('overlay').classList.remove('active'); }
+
+window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeOverlay(); });
+
+init();
+</script>
+</body>
+</html>

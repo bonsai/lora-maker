@@ -1,0 +1,84 @@
+videos:
+  - video_id: gsQuyDa8Kgk
+    source_url: https://www.youtube.com/watch?v=gsQuyDa8Kgk
+    local_path: "data/local-videos/gsQuyDa8Kgk/gsQuyDa8Kgk.mp4"
+    creator_or_rights_holder: "ShiShi Yamazaki / ヤマザキシシ"
+    terms_url: "https://www.youtube.com/t/terms"
+    rights_basis: "platform_license"
+    permitted_uses: [acquisition, frame_extraction, dataset_creation]
+    permission_status: approved
+    reviewed_by: human reviewer
+    reviewed_at: "2026-10-26"
+    notes: "L'OFFICIEL UKRAINE Special Art Cover (11s, animation). 性的表現なし。"
+
+  - video_id: tVTix8rxwgM
+    source_url: https://www.youtube.com/watch?v=tVTix8rxwgM
+    local_path: "data/local-videos/tVTix8rxwgM/tVTix8rxwgM.mp4"
+    creator_or_rights_holder: "ShiShi Yamazaki / ヤマザキシシ"
+    terms_url: "https://www.youtube.com/t/terms"
+    rights_basis: "platform_license"
+    permitted_uses: [acquisition, frame_extraction, dataset_creation]
+    permission_status: approved
+    reviewed_by: human reviewer
+    reviewed_at: "2026-10-26"
+    notes: "EST PINK BARGAIN 2017 Lucky Bag (16s, animation). 性的表現なし。"
+
+  - video_id: tMXLq461Yjg
+    source_url: https://www.youtube.com/watch?v=tMXLq461Yjg
+    local_path: "data/local-videos/tMXLq461Yjg/tMXLq461Yjg.mp4"
+    creator_or_rights_holder: "ShiShi Yamazaki / ヤマザキシシ"
+    terms_url: "https://www.youtube.com/t/terms"
+    rights_basis: "platform_license"
+    permitted_uses: [acquisition, frame_extraction, dataset_creation]
+    permission_status: approved
+    reviewed_by: human reviewer
+    reviewed_at: "2026-10-26"
+    notes: "EST PINK BARGAIN 2017 Bargain (16s, animation). 性的表現なし。"
+
+  - video_id: h3s-jeOohW0
+    source_url: https://www.youtube.com/watch?v=h3s-jeOohW0
+    local_path: "data/local-videos/h3s-jeOohW0/h3s-jeOohW0.mp4"
+    creator_or_rights_holder: "ShiShi Yamazaki / ヤマザキシシ"
+    terms_url: "https://www.youtube.com/t/terms"
+    rights_basis: "platform_license"
+    permitted_uses: [acquisition, frame_extraction, dataset_creation]
+    permission_status: approved
+    reviewed_by: human reviewer
+    reviewed_at: "2026-10-26"
+    notes: "New Chitose Airport PR Clip (31s, animation). 性的表現なし。"
+
+  - video_id: TdWDZyf8vns
+    source_url: https://www.youtube.com/watch?v=TdWDZyf8vns
+    local_path: "data/local-videos/TdWDZyf8vns/TdWDZyf8vns.mp4"
+    creator_or_rights_holder: "ShiShi Yamazaki / ヤマザキシシ"
+    terms_url: "https://www.youtube.com/t/terms"
+    rights_basis: "platform_license"
+    permitted_uses: [acquisition, frame_extraction, dataset_creation]
+    permission_status: approved
+    reviewed_by: human reviewer
+    reviewed_at: "2026-10-26"
+    notes: "Bloom YAMAZAKI (40s, animation). 性的表現なし。LoRA データセット候補。"
+
+  - video_id: QJ9LvngEepg
+    source_url: https://www.youtube.com/watch?v=QJ9LvngEepg
+    local_path: "data/local-videos/QJ9LvngEepg/QJ9LvngEepg.mp4"
+    creator_or_rights_holder: "ShiShi Yamazaki / ヤマザキシシ"
+    terms_url: "https://www.youtube.com/t/terms"
+    rights_basis: "platform_license"
+    permitted_uses: [acquisition, frame_extraction, dataset_creation]
+    permission_status: approved
+    reviewed_by: human reviewer
+    reviewed_at: "2026-10-26"
+    notes: "ShiShi Yamazaki Reel 2021 (96s, animation). 性的表現なし。LoRA データセット候補。"
+
+  - video_id: TfmHub8uQcM
+    source_url: https://www.youtube.com/watch?v=TfmHub8uQcM
+    local_path: "data/local-videos/TfmHub8uQcM/TfmHub8uQcM.mp4"
+    creator_or_rights_holder: "ShiShi Yamazaki / ヤマザキシシ"
+    terms_url: "https://www.youtube.com/t/terms"
+    rights_basis: "platform_license"
+    permitted_uses: [acquisition, frame_extraction, dataset_creation]
+    permission_status: approved
+    reviewed_by: human reviewer
+    reviewed_at: "2026-10-26"
+    notes: "フクオカカウントダウン2020-2021 (31s, animation). 性的表現なし。LoRA データセット候補。"

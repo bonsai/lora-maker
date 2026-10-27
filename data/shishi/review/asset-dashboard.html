@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shishi Asset Dashboard — ローカル資産管理</title>
+<style>
+:root {
+  --bg:#0f1116; --card:#181b23; --line:#2a2f3a; --fg:#e8eaf0;
+  --dim:#9aa3b2; --accent:#ff5d8f; --ok:#39d98a; --warn:#ffd166;
+  --info:#7cc4ff; --danger:#ff6b6b;
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; padding-bottom:120px; }
+header { position:sticky; top:0; z-index:10; background:rgba(15,17,22,.96); border-bottom:1px solid var(--line); padding:12px 16px; backdrop-filter:blur(8px); }
+h1 { font-size:16px; margin:0 0 3px; }
+.sub { color:var(--dim); font-size:11px; }
+.stats { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; font-size:12px; }
+.stat { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:4px 10px; }
+.stat b { color:var(--ok); }
+.controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+button, input, select { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px; }
+button.active { border-color:var(--accent); color:var(--accent); }
+input[type=search] { min-width:180px; cursor:text; }
+.view-group { display:flex; gap:3px; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:3px; }
+.view-group button { border:none; background:transparent; padding:4px 10px; border-radius:4px; }
+.view-group button.active { background:var(--accent); color:#fff; }
+main { padding:14px 16px; }
+/* Video Gallery */
+.gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+.vcard { background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+.vcard.picked { border-color:var(--ok); }
+.vthumb { position:relative; aspect-ratio:16/9; background:#000; }
+.vthumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.vinfo { padding:10px 12px; display:flex; flex-direction:column; gap:5px; }
+.vtitle { font-size:12px; font-weight:600; line-height:1.3; }
+.vmeta { color:var(--dim); font-size:11px; display:flex; gap:8px; flex-wrap:wrap; }
+.badge { border:1px solid var(--line); border-radius:999px; padding:0 7px; font-size:11px; }
+.badge.approved { color:var(--ok); border-color:#2a5a3a; }
+.badge.pending { color:var(--warn); border-color:#5a4a1d; }
+.badge.error { color:var(--danger); border-color:#5a1d1d; }
+.vactions { display:flex; gap:6px; margin-top:4px; }
+.vactions button { padding:3px 8px; font-size:11px; }
+/* Frame Grid */
+.fgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
+.fcard { background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.fcard img { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; background:#000; }
+.fmeta { padding:6px 8px; font-size:11px; color:var(--dim); }
+.fmeta .fcap { color:var(--fg); font-size:10px; line-height:1.3; margin-top:3px; word-break:break-all; }
+/* Dataset Table */
+.dtable { width:100%; border-collapse:collapse; font-size:11px; }
+.dtable th, .dtable td { border:1px solid var(--line); padding:5px 8px; text-align:left; }
+.dtable th { background:var(--card); color:var(--dim); font-weight:500; position:sticky; top:0; }
+.dtable td img { width:80px; height:45px; object-fit:cover; border-radius:4px; display:block; }
+.dtable tr:hover td { background:rgba(255,255,255,.03); }
+/* Pagination */
+.pager { display:flex; gap:8px; align-items:center; justify-content:center; margin:16px 0; }
+.pager button { min-width:32px; }
+.pager span { color:var(--dim); font-size:11px; }
+/* Modal / Overlay */
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:50; justify-content:center; align-items:center; padding:20px; }
+.overlay.active { display:flex; }
+.obox { background:var(--card); border:1px solid var(--line); border-radius:10px; max-width:90vw; max-height:90vh; overflow:auto; padding:16px; }
+.obox img { max-width:100%; border-radius:6px; }
+.obox .ocap { margin-top:8px; font-size:12px; white-space:pre-wrap; }
+.close { position:absolute; top:12px; right:16px; font-size:20px; color:var(--fg); cursor:pointer; background:transparent; border:0; }
+/* Utility */
+.empty { color:var(--dim); padding:30px; text-align:center; grid-column:1/-1; }
+.hide { display:none !important; }
+.filter-group { display:flex; gap:4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎬 Shishi Asset Dashboard</h1>
+  <div class="sub">ローカル資産管理 — 動画・フレーム・メタデータ統合ビュー</div>
+  <div class="stats" id="stats"></div>
+  <div class="controls">
+    <div class="view-group" id="viewGroup">
+      <button data-view="videos" class="active" title="動画ギャラリー">🎬 Videos</button>
+      <button data-view="frames" title="フレームグリッド">🖼 Frames</button>
+      <button data-view="dataset" title="データセットテーブル">📊 Dataset</button>
+    </div>
+    <div class="filter-group">
+      <select id="videoFilter">
+        <option value="">すべての動画</option>
+      </select>
+      <label style="color:var(--dim);font-size:11px;"><input type="checkbox" id="onlyWithCaptions" checked> キャプションあり</label>
+    </div>
+    <input type="search" id="q" placeholder="ID / タイトル / タグ で検索">
+    <span class="sub" id="shown"></span>
+  </div>
+</header>
+<main id="main"></main>
+
+<div class="overlay" id="overlay">
+  <button class="close" onclick="closeOverlay()">✕</button>
+  <div class="obox">
+    <img id="oimg" src="" alt="">
+    <div class="ocap" id="ocap"></div>
+  </div>
+</div>
+
+<script>
+/* ---- EMBEDDED MANIFEST ---- */
+const MANIFEST = {"generated_at": "2026-10-27T03:30:43.462555+00:00", "generator": "build_shishi_manifest.py", "videos": [{"video_id": "QJ9LvngEepg", "title": "ShiShi Yamazaki Reel 2021", "source_url": "https://www.youtube.com/watch?v=QJ9LvngEepg", "permission_status": "approved", "rights_basis": "platform_license", "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ", "local_video": {"path": "local-videos/QJ9LvngEepg/QJ9LvngEepg.mp4", "exists": true, "size_bytes": 21398778}, "frames": {"count": 63, "first": "QJ9LvngEepg_000068.png", "last": "QJ9LvngEepg_000130.png", "caption_coverage": "63/63", "entries": [{"filename": "QJ9LvngEepg_000068.png", "path": "images-shishi/QJ9LvngEepg_000068.png", "caption_path": "images-shishi/QJ9LvngEepg_000068.txt", "index": 68, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000069.png", "path": "images-shishi/QJ9LvngEepg_000069.png", "caption_path": "images-shishi/QJ9LvngEepg_000069.txt", "index": 69, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000070.png", "path": "images-shishi/QJ9LvngEepg_000070.png", "caption_path": "images-shishi/QJ9LvngEepg_000070.txt", "index": 70, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000071.png", "path": "images-shishi/QJ9LvngEepg_000071.png", "caption_path": "images-shishi/QJ9LvngEepg_000071.txt", "index": 71, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000072.png", "path": "images-shishi/QJ9LvngEepg_000072.png", "caption_path": "images-shishi/QJ9LvngEepg_000072.txt", "index": 72, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000073.png", "path": "images-shishi/QJ9LvngEepg_000073.png", "caption_path": "images-shishi/QJ9LvngEepg_000073.txt", "index": 73, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000074.png", "path": "images-shishi/QJ9LvngEepg_000074.png", "caption_path": "images-shishi/QJ9LvngEepg_000074.txt", "index": 74, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000075.png", "path": "images-shishi/QJ9LvngEepg_000075.png", "caption_path": "images-shishi/QJ9LvngEepg_000075.txt", "index": 75, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000076.png", "path": "images-shishi/QJ9LvngEepg_000076.png", "caption_path": "images-shishi/QJ9LvngEepg_000076.txt", "index": 76, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000077.png", "path": "images-shishi/QJ9LvngEepg_000077.png", "caption_path": "images-shishi/QJ9LvngEepg_000077.txt", "index": 77, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000078.png", "path": "images-shishi/QJ9LvngEepg_000078.png", "caption_path": "images-shishi/QJ9LvngEepg_000078.txt", "index": 78, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000079.png", "path": "images-shishi/QJ9LvngEepg_000079.png", "caption_path": "images-shishi/QJ9LvngEepg_000079.txt", "index": 79, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000080.png", "path": "images-shishi/QJ9LvngEepg_000080.png", "caption_path": "images-shishi/QJ9LvngEepg_000080.txt", "index": 80, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000081.png", "path": "images-shishi/QJ9LvngEepg_000081.png", "caption_path": "images-shishi/QJ9LvngEepg_000081.txt", "index": 81, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000082.png", "path": "images-shishi/QJ9LvngEepg_000082.png", "caption_path": "images-shishi/QJ9LvngEepg_000082.txt", "index": 82, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000083.png", "path": "images-shishi/QJ9LvngEepg_000083.png", "caption_path": "images-shishi/QJ9LvngEepg_000083.txt", "index": 83, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000084.png", "path": "images-shishi/QJ9LvngEepg_000084.png", "caption_path": "images-shishi/QJ9LvngEepg_000084.txt", "index": 84, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000085.png", "path": "images-shishi/QJ9LvngEepg_000085.png", "caption_path": "images-shishi/QJ9LvngEepg_000085.txt", "index": 85, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000086.png", "path": "images-shishi/QJ9LvngEepg_000086.png", "caption_path": "images-shishi/QJ9LvngEepg_000086.txt", "index": 86, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000087.png", "path": "images-shishi/QJ9LvngEepg_000087.png", "caption_path": "images-shishi/QJ9LvngEepg_000087.txt", "index": 87, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000088.png", "path": "images-shishi/QJ9LvngEepg_000088.png", "caption_path": "images-shishi/QJ9LvngEepg_000088.txt", "index": 88, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000089.png", "path": "images-shishi/QJ9LvngEepg_000089.png", "caption_path": "images-shishi/QJ9LvngEepg_000089.txt", "index": 89, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000090.png", "path": "images-shishi/QJ9LvngEepg_000090.png", "caption_path": "images-shishi/QJ9LvngEepg_000090.txt", "index": 90, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000091.png", "path": "images-shishi/QJ9LvngEepg_000091.png", "caption_path": "images-shishi/QJ9LvngEepg_000091.txt", "index": 91, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000092.png", "path": "images-shishi/QJ9LvngEepg_000092.png", "caption_path": "images-shishi/QJ9LvngEepg_000092.txt", "index": 92, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000093.png", "path": "images-shishi/QJ9LvngEepg_000093.png", "caption_path": "images-shishi/QJ9LvngEepg_000093.txt", "index": 93, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000094.png", "path": "images-shishi/QJ9LvngEepg_000094.png", "caption_path": "images-shishi/QJ9LvngEepg_000094.txt", "index": 94, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000095.png", "path": "images-shishi/QJ9LvngEepg_000095.png", "caption_path": "images-shishi/QJ9LvngEepg_000095.txt", "index": 95, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000096.png", "path": "images-shishi/QJ9LvngEepg_000096.png", "caption_path": "images-shishi/QJ9LvngEepg_000096.txt", "index": 96, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000097.png", "path": "images-shishi/QJ9LvngEepg_000097.png", "caption_path": "images-shishi/QJ9LvngEepg_000097.txt", "index": 97, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000098.png", "path": "images-shishi/QJ9LvngEepg_000098.png", "caption_path": "images-shishi/QJ9LvngEepg_000098.txt", "index": 98, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000099.png", "path": "images-shishi/QJ9LvngEepg_000099.png", "caption_path": "images-shishi/QJ9LvngEepg_000099.txt", "index": 99, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000100.png", "path": "images-shishi/QJ9LvngEepg_000100.png", "caption_path": "images-shishi/QJ9LvngEepg_000100.txt", "index": 100, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000101.png", "path": "images-shishi/QJ9LvngEepg_000101.png", "caption_path": "images-shishi/QJ9LvngEepg_000101.txt", "index": 101, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000102.png", "path": "images-shishi/QJ9LvngEepg_000102.png", "caption_path": "images-shishi/QJ9LvngEepg_000102.txt", "index": 102, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000103.png", "path": "images-shishi/QJ9LvngEepg_000103.png", "caption_path": "images-shishi/QJ9LvngEepg_000103.txt", "index": 103, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000104.png", "path": "images-shishi/QJ9LvngEepg_000104.png", "caption_path": "images-shishi/QJ9LvngEepg_000104.txt", "index": 104, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000105.png", "path": "images-shishi/QJ9LvngEepg_000105.png", "caption_path": "images-shishi/QJ9LvngEepg_000105.txt", "index": 105, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000106.png", "path": "images-shishi/QJ9LvngEepg_000106.png", "caption_path": "images-shishi/QJ9LvngEepg_000106.txt", "index": 106, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000107.png", "path": "images-shishi/QJ9LvngEepg_000107.png", "caption_path": "images-shishi/QJ9LvngEepg_000107.txt", "index": 107, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000108.png", "path": "images-shishi/QJ9LvngEepg_000108.png", "caption_path": "images-shishi/QJ9LvngEepg_000108.txt", "index": 108, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000109.png", "path": "images-shishi/QJ9LvngEepg_000109.png", "caption_path": "images-shishi/QJ9LvngEepg_000109.txt", "index": 109, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000110.png", "path": "images-shishi/QJ9LvngEepg_000110.png", "caption_path": "images-shishi/QJ9LvngEepg_000110.txt", "index": 110, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000111.png", "path": "images-shishi/QJ9LvngEepg_000111.png", "caption_path": "images-shishi/QJ9LvngEepg_000111.txt", "index": 111, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000112.png", "path": "images-shishi/QJ9LvngEepg_000112.png", "caption_path": "images-shishi/QJ9LvngEepg_000112.txt", "index": 112, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000113.png", "path": "images-shishi/QJ9LvngEepg_000113.png", "caption_path": "images-shishi/QJ9LvngEepg_000113.txt", "index": 113, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000114.png", "path": "images-shishi/QJ9LvngEepg_000114.png", "caption_path": "images-shishi/QJ9LvngEepg_000114.txt", "index": 114, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000115.png", "path": "images-shishi/QJ9LvngEepg_000115.png", "caption_path": "images-shishi/QJ9LvngEepg_000115.txt", "index": 115, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000116.png", "path": "images-shishi/QJ9LvngEepg_000116.png", "caption_path": "images-shishi/QJ9LvngEepg_000116.txt", "index": 116, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000117.png", "path": "images-shishi/QJ9LvngEepg_000117.png", "caption_path": "images-shishi/QJ9LvngEepg_000117.txt", "index": 117, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000118.png", "path": "images-shishi/QJ9LvngEepg_000118.png", "caption_path": "images-shishi/QJ9LvngEepg_000118.txt", "index": 118, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000119.png", "path": "images-shishi/QJ9LvngEepg_000119.png", "caption_path": "images-shishi/QJ9LvngEepg_000119.txt", "index": 119, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000120.png", "path": "images-shishi/QJ9LvngEepg_000120.png", "caption_path": "images-shishi/QJ9LvngEepg_000120.txt", "index": 120, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000121.png", "path": "images-shishi/QJ9LvngEepg_000121.png", "caption_path": "images-shishi/QJ9LvngEepg_000121.txt", "index": 121, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000122.png", "path": "images-shishi/QJ9LvngEepg_000122.png", "caption_path": "images-shishi/QJ9LvngEepg_000122.txt", "index": 122, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000123.png", "path": "images-shishi/QJ9LvngEepg_000123.png", "caption_path": "images-shishi/QJ9LvngEepg_000123.txt", "index": 123, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000124.png", "path": "images-shishi/QJ9LvngEepg_000124.png", "caption_path": "images-shishi/QJ9LvngEepg_000124.txt", "index": 124, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000125.png", "path": "images-shishi/QJ9LvngEepg_000125.png", "caption_path": "images-shishi/QJ9LvngEepg_000125.txt", "index": 125, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000126.png", "path": "images-shishi/QJ9LvngEepg_000126.png", "caption_path": "images-shishi/QJ9LvngEepg_000126.txt", "index": 126, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000127.png", "path": "images-shishi/QJ9LvngEepg_000127.png", "caption_path": "images-shishi/QJ9LvngEepg_000127.txt", "index": 127, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000128.png", "path": "images-shishi/QJ9LvngEepg_000128.png", "caption_path": "images-shishi/QJ9LvngEepg_000128.txt", "index": 128, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000129.png", "path": "images-shishi/QJ9LvngEepg_000129.png", "caption_path": "images-shishi/QJ9LvngEepg_000129.txt", "index": 129, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "QJ9LvngEepg_000130.png", "path": "images-shishi/QJ9LvngEepg_000130.png", "caption_path": "images-shishi/QJ9LvngEepg_000130.txt", "index": 130, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}]}}, {"video_id": "TdWDZyf8vns", "title": "Bloom YAMAZAKI", "source_url": "https://www.youtube.com/watch?v=TdWDZyf8vns", "permission_status": "approved", "rights_basis": "platform_license", "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ", "local_video": {"path": "local-videos/TdWDZyf8vns/TdWDZyf8vns.mp4", "exists": true, "size_bytes": 8754052}, "frames": {"count": 16, "first": "TdWDZyf8vns_000052.png", "last": "TdWDZyf8vns_000067.png", "caption_coverage": "16/16", "entries": [{"filename": "TdWDZyf8vns_000052.png", "path": "images-shishi/TdWDZyf8vns_000052.png", "caption_path": "images-shishi/TdWDZyf8vns_000052.txt", "index": 52, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000053.png", "path": "images-shishi/TdWDZyf8vns_000053.png", "caption_path": "images-shishi/TdWDZyf8vns_000053.txt", "index": 53, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000054.png", "path": "images-shishi/TdWDZyf8vns_000054.png", "caption_path": "images-shishi/TdWDZyf8vns_000054.txt", "index": 54, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000055.png", "path": "images-shishi/TdWDZyf8vns_000055.png", "caption_path": "images-shishi/TdWDZyf8vns_000055.txt", "index": 55, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000056.png", "path": "images-shishi/TdWDZyf8vns_000056.png", "caption_path": "images-shishi/TdWDZyf8vns_000056.txt", "index": 56, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000057.png", "path": "images-shishi/TdWDZyf8vns_000057.png", "caption_path": "images-shishi/TdWDZyf8vns_000057.txt", "index": 57, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000058.png", "path": "images-shishi/TdWDZyf8vns_000058.png", "caption_path": "images-shishi/TdWDZyf8vns_000058.txt", "index": 58, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000059.png", "path": "images-shishi/TdWDZyf8vns_000059.png", "caption_path": "images-shishi/TdWDZyf8vns_000059.txt", "index": 59, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000060.png", "path": "images-shishi/TdWDZyf8vns_000060.png", "caption_path": "images-shishi/TdWDZyf8vns_000060.txt", "index": 60, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000061.png", "path": "images-shishi/TdWDZyf8vns_000061.png", "caption_path": "images-shishi/TdWDZyf8vns_000061.txt", "index": 61, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000062.png", "path": "images-shishi/TdWDZyf8vns_000062.png", "caption_path": "images-shishi/TdWDZyf8vns_000062.txt", "index": 62, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000063.png", "path": "images-shishi/TdWDZyf8vns_000063.png", "caption_path": "images-shishi/TdWDZyf8vns_000063.txt", "index": 63, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000064.png", "path": "images-shishi/TdWDZyf8vns_000064.png", "caption_path": "images-shishi/TdWDZyf8vns_000064.txt", "index": 64, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000065.png", "path": "images-shishi/TdWDZyf8vns_000065.png", "caption_path": "images-shishi/TdWDZyf8vns_000065.txt", "index": 65, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000066.png", "path": "images-shishi/TdWDZyf8vns_000066.png", "caption_path": "images-shishi/TdWDZyf8vns_000066.txt", "index": 66, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TdWDZyf8vns_000067.png", "path": "images-shishi/TdWDZyf8vns_000067.png", "caption_path": "images-shishi/TdWDZyf8vns_000067.txt", "index": 67, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}]}}, {"video_id": "TfmHub8uQcM", "title": "フクオカカウントダウン2020-2021", "source_url": "https://www.youtube.com/watch?v=TfmHub8uQcM", "permission_status": "approved", "rights_basis": "platform_license", "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ", "local_video": {"path": "local-videos/TfmHub8uQcM/TfmHub8uQcM.mp4", "exists": true, "size_bytes": 4831453}, "frames": {"count": 13, "first": "TfmHub8uQcM_000131.png", "last": "TfmHub8uQcM_000143.png", "caption_coverage": "13/13", "entries": [{"filename": "TfmHub8uQcM_000131.png", "path": "images-shishi/TfmHub8uQcM_000131.png", "caption_path": "images-shishi/TfmHub8uQcM_000131.txt", "index": 131, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000132.png", "path": "images-shishi/TfmHub8uQcM_000132.png", "caption_path": "images-shishi/TfmHub8uQcM_000132.txt", "index": 132, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000133.png", "path": "images-shishi/TfmHub8uQcM_000133.png", "caption_path": "images-shishi/TfmHub8uQcM_000133.txt", "index": 133, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000134.png", "path": "images-shishi/TfmHub8uQcM_000134.png", "caption_path": "images-shishi/TfmHub8uQcM_000134.txt", "index": 134, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000135.png", "path": "images-shishi/TfmHub8uQcM_000135.png", "caption_path": "images-shishi/TfmHub8uQcM_000135.txt", "index": 135, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000136.png", "path": "images-shishi/TfmHub8uQcM_000136.png", "caption_path": "images-shishi/TfmHub8uQcM_000136.txt", "index": 136, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000137.png", "path": "images-shishi/TfmHub8uQcM_000137.png", "caption_path": "images-shishi/TfmHub8uQcM_000137.txt", "index": 137, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000138.png", "path": "images-shishi/TfmHub8uQcM_000138.png", "caption_path": "images-shishi/TfmHub8uQcM_000138.txt", "index": 138, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000139.png", "path": "images-shishi/TfmHub8uQcM_000139.png", "caption_path": "images-shishi/TfmHub8uQcM_000139.txt", "index": 139, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000140.png", "path": "images-shishi/TfmHub8uQcM_000140.png", "caption_path": "images-shishi/TfmHub8uQcM_000140.txt", "index": 140, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000141.png", "path": "images-shishi/TfmHub8uQcM_000141.png", "caption_path": "images-shishi/TfmHub8uQcM_000141.txt", "index": 141, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000142.png", "path": "images-shishi/TfmHub8uQcM_000142.png", "caption_path": "images-shishi/TfmHub8uQcM_000142.txt", "index": 142, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "TfmHub8uQcM_000143.png", "path": "images-shishi/TfmHub8uQcM_000143.png", "caption_path": "images-shishi/TfmHub8uQcM_000143.txt", "index": 143, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}]}}, {"video_id": "gsQuyDa8Kgk", "title": "L'OFFICIEL UKRAINE Special Art Cover", "source_url": "https://www.youtube.com/watch?v=gsQuyDa8Kgk", "permission_status": "approved", "rights_basis": "platform_license", "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ", "local_video": {"path": "local-videos/gsQuyDa8Kgk/gsQuyDa8Kgk.mp4", "exists": true, "size_bytes": 2970318}, "frames": {"count": 11, "first": "gsQuyDa8Kgk_000000.png", "last": "gsQuyDa8Kgk_000010.png", "caption_coverage": "11/11", "entries": [{"filename": "gsQuyDa8Kgk_000000.png", "path": "images-shishi/gsQuyDa8Kgk_000000.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000000.txt", "index": 0, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000001.png", "path": "images-shishi/gsQuyDa8Kgk_000001.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000001.txt", "index": 1, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000002.png", "path": "images-shishi/gsQuyDa8Kgk_000002.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000002.txt", "index": 2, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000003.png", "path": "images-shishi/gsQuyDa8Kgk_000003.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000003.txt", "index": 3, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000004.png", "path": "images-shishi/gsQuyDa8Kgk_000004.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000004.txt", "index": 4, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000005.png", "path": "images-shishi/gsQuyDa8Kgk_000005.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000005.txt", "index": 5, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000006.png", "path": "images-shishi/gsQuyDa8Kgk_000006.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000006.txt", "index": 6, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000007.png", "path": "images-shishi/gsQuyDa8Kgk_000007.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000007.txt", "index": 7, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000008.png", "path": "images-shishi/gsQuyDa8Kgk_000008.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000008.txt", "index": 8, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000009.png", "path": "images-shishi/gsQuyDa8Kgk_000009.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000009.txt", "index": 9, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "gsQuyDa8Kgk_000010.png", "path": "images-shishi/gsQuyDa8Kgk_000010.png", "caption_path": "images-shishi/gsQuyDa8Kgk_000010.txt", "index": 10, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}]}}, {"video_id": "h3s-jeOohW0", "title": "New Chitose Airport PR Clip", "source_url": "https://www.youtube.com/watch?v=h3s-jeOohW0", "permission_status": "approved", "rights_basis": "platform_license", "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ", "local_video": {"path": "local-videos/h3s-jeOohW0/h3s-jeOohW0.mp4", "exists": true, "size_bytes": 4764966}, "frames": {"count": 25, "first": "h3s-jeOohW0_000027.png", "last": "h3s-jeOohW0_000051.png", "caption_coverage": "25/25", "entries": [{"filename": "h3s-jeOohW0_000027.png", "path": "images-shishi/h3s-jeOohW0_000027.png", "caption_path": "images-shishi/h3s-jeOohW0_000027.txt", "index": 27, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000028.png", "path": "images-shishi/h3s-jeOohW0_000028.png", "caption_path": "images-shishi/h3s-jeOohW0_000028.txt", "index": 28, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000029.png", "path": "images-shishi/h3s-jeOohW0_000029.png", "caption_path": "images-shishi/h3s-jeOohW0_000029.txt", "index": 29, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000030.png", "path": "images-shishi/h3s-jeOohW0_000030.png", "caption_path": "images-shishi/h3s-jeOohW0_000030.txt", "index": 30, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000031.png", "path": "images-shishi/h3s-jeOohW0_000031.png", "caption_path": "images-shishi/h3s-jeOohW0_000031.txt", "index": 31, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000032.png", "path": "images-shishi/h3s-jeOohW0_000032.png", "caption_path": "images-shishi/h3s-jeOohW0_000032.txt", "index": 32, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000033.png", "path": "images-shishi/h3s-jeOohW0_000033.png", "caption_path": "images-shishi/h3s-jeOohW0_000033.txt", "index": 33, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000034.png", "path": "images-shishi/h3s-jeOohW0_000034.png", "caption_path": "images-shishi/h3s-jeOohW0_000034.txt", "index": 34, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000035.png", "path": "images-shishi/h3s-jeOohW0_000035.png", "caption_path": "images-shishi/h3s-jeOohW0_000035.txt", "index": 35, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000036.png", "path": "images-shishi/h3s-jeOohW0_000036.png", "caption_path": "images-shishi/h3s-jeOohW0_000036.txt", "index": 36, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000037.png", "path": "images-shishi/h3s-jeOohW0_000037.png", "caption_path": "images-shishi/h3s-jeOohW0_000037.txt", "index": 37, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000038.png", "path": "images-shishi/h3s-jeOohW0_000038.png", "caption_path": "images-shishi/h3s-jeOohW0_000038.txt", "index": 38, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000039.png", "path": "images-shishi/h3s-jeOohW0_000039.png", "caption_path": "images-shishi/h3s-jeOohW0_000039.txt", "index": 39, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000040.png", "path": "images-shishi/h3s-jeOohW0_000040.png", "caption_path": "images-shishi/h3s-jeOohW0_000040.txt", "index": 40, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000041.png", "path": "images-shishi/h3s-jeOohW0_000041.png", "caption_path": "images-shishi/h3s-jeOohW0_000041.txt", "index": 41, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000042.png", "path": "images-shishi/h3s-jeOohW0_000042.png", "caption_path": "images-shishi/h3s-jeOohW0_000042.txt", "index": 42, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000043.png", "path": "images-shishi/h3s-jeOohW0_000043.png", "caption_path": "images-shishi/h3s-jeOohW0_000043.txt", "index": 43, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000044.png", "path": "images-shishi/h3s-jeOohW0_000044.png", "caption_path": "images-shishi/h3s-jeOohW0_000044.txt", "index": 44, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000045.png", "path": "images-shishi/h3s-jeOohW0_000045.png", "caption_path": "images-shishi/h3s-jeOohW0_000045.txt", "index": 45, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000046.png", "path": "images-shishi/h3s-jeOohW0_000046.png", "caption_path": "images-shishi/h3s-jeOohW0_000046.txt", "index": 46, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000047.png", "path": "images-shishi/h3s-jeOohW0_000047.png", "caption_path": "images-shishi/h3s-jeOohW0_000047.txt", "index": 47, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000048.png", "path": "images-shishi/h3s-jeOohW0_000048.png", "caption_path": "images-shishi/h3s-jeOohW0_000048.txt", "index": 48, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000049.png", "path": "images-shishi/h3s-jeOohW0_000049.png", "caption_path": "images-shishi/h3s-jeOohW0_000049.txt", "index": 49, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000050.png", "path": "images-shishi/h3s-jeOohW0_000050.png", "caption_path": "images-shishi/h3s-jeOohW0_000050.txt", "index": 50, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "h3s-jeOohW0_000051.png", "path": "images-shishi/h3s-jeOohW0_000051.png", "caption_path": "images-shishi/h3s-jeOohW0_000051.txt", "index": 51, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}]}}, {"video_id": "tMXLq461Yjg", "title": "EST PINK BARGAIN 2017 Bargain", "source_url": "https://www.youtube.com/watch?v=tMXLq461Yjg", "permission_status": "approved", "rights_basis": "platform_license", "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ", "local_video": {"path": "local-videos/tMXLq461Yjg/tMXLq461Yjg.mp4", "exists": true, "size_bytes": 4165834}, "frames": {"count": 2, "first": "tMXLq461Yjg_000025.png", "last": "tMXLq461Yjg_000026.png", "caption_coverage": "2/2", "entries": [{"filename": "tMXLq461Yjg_000025.png", "path": "images-shishi/tMXLq461Yjg_000025.png", "caption_path": "images-shishi/tMXLq461Yjg_000025.txt", "index": 25, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tMXLq461Yjg_000026.png", "path": "images-shishi/tMXLq461Yjg_000026.png", "caption_path": "images-shishi/tMXLq461Yjg_000026.txt", "index": 26, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}]}}, {"video_id": "tVTix8rxwgM", "title": "EST PINK BARGAIN 2017 Lucky Bag", "source_url": "https://www.youtube.com/watch?v=tVTix8rxwgM", "permission_status": "approved", "rights_basis": "platform_license", "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ", "local_video": {"path": "local-videos/tVTix8rxwgM/tVTix8rxwgM.mp4", "exists": true, "size_bytes": 4094145}, "frames": {"count": 14, "first": "tVTix8rxwgM_000011.png", "last": "tVTix8rxwgM_000024.png", "caption_coverage": "14/14", "entries": [{"filename": "tVTix8rxwgM_000011.png", "path": "images-shishi/tVTix8rxwgM_000011.png", "caption_path": "images-shishi/tVTix8rxwgM_000011.txt", "index": 11, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000012.png", "path": "images-shishi/tVTix8rxwgM_000012.png", "caption_path": "images-shishi/tVTix8rxwgM_000012.txt", "index": 12, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000013.png", "path": "images-shishi/tVTix8rxwgM_000013.png", "caption_path": "images-shishi/tVTix8rxwgM_000013.txt", "index": 13, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000014.png", "path": "images-shishi/tVTix8rxwgM_000014.png", "caption_path": "images-shishi/tVTix8rxwgM_000014.txt", "index": 14, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000015.png", "path": "images-shishi/tVTix8rxwgM_000015.png", "caption_path": "images-shishi/tVTix8rxwgM_000015.txt", "index": 15, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000016.png", "path": "images-shishi/tVTix8rxwgM_000016.png", "caption_path": "images-shishi/tVTix8rxwgM_000016.txt", "index": 16, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000017.png", "path": "images-shishi/tVTix8rxwgM_000017.png", "caption_path": "images-shishi/tVTix8rxwgM_000017.txt", "index": 17, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000018.png", "path": "images-shishi/tVTix8rxwgM_000018.png", "caption_path": "images-shishi/tVTix8rxwgM_000018.txt", "index": 18, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000019.png", "path": "images-shishi/tVTix8rxwgM_000019.png", "caption_path": "images-shishi/tVTix8rxwgM_000019.txt", "index": 19, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000020.png", "path": "images-shishi/tVTix8rxwgM_000020.png", "caption_path": "images-shishi/tVTix8rxwgM_000020.txt", "index": 20, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000021.png", "path": "images-shishi/tVTix8rxwgM_000021.png", "caption_path": "images-shishi/tVTix8rxwgM_000021.txt", "index": 21, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000022.png", "path": "images-shishi/tVTix8rxwgM_000022.png", "caption_path": "images-shishi/tVTix8rxwgM_000022.txt", "index": 22, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000023.png", "path": "images-shishi/tVTix8rxwgM_000023.png", "caption_path": "images-shishi/tVTix8rxwgM_000023.txt", "index": 23, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}, {"filename": "tVTix8rxwgM_000024.png", "path": "images-shishi/tVTix8rxwgM_000024.png", "caption_path": "images-shishi/tVTix8rxwgM_000024.txt", "index": 24, "has_caption": true, "caption_text": "yamazaki_shishi, anime character"}]}}], "summary": {"total_videos_with_frames": 7, "total_videos_approved": 7, "total_videos_downloaded": 7, "total_frames": 144, "total_captions": 144, "caption_coverage": "144/144"}};
+/* --------------------------- */
+
+let view = "videos";
+let query = "";
+let videoFilter = "";
+let onlyWithCaptions = true;
+let page = 1;
+const PAGE_SIZE = 48;
+
+function esc(s) { return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#x27;"}[c])); }
+function fmtBytes(b) { if (!b) return "-"; const u=["B","KB","MB","GB"]; let i=0; while(b>1024&&i<u.length-1){b/=1024;i++;} return b.toFixed(1)+" "+u[i]; }
+
+/* Build flat frame list from manifest */
+const allFrames = [];
+const videoMap = {};
+for (const v of MANIFEST.videos) {
+  videoMap[v.video_id] = v;
+  if (v.frames && v.frames.entries) {
+    for (const e of v.frames.entries) {
+      allFrames.push({ ...e, video_id: v.video_id, title: v.title || v.video_id });
+    }
+  }
+}
+
+/* Populate video filter dropdown */
+const sel = document.getElementById("videoFilter");
+for (const v of MANIFEST.videos) {
+  const opt = document.createElement("option");
+  opt.value = v.video_id;
+  opt.textContent = (v.title || v.video_id) + " (" + (v.frames.count||0) + ")";
+  sel.appendChild(opt);
+}
+
+/* Stats */
+const s = MANIFEST.summary;
+document.getElementById("stats").innerHTML = `
+  <div class="stat">🎬 Videos <b>${s.total_videos_with_frames}</b></div>
+  <div class="stat">✅ Approved <b>${s.total_videos_approved}</b></div>
+  <div class="stat">💾 Downloaded <b>${s.total_videos_downloaded}</b></div>
+  <div class="stat">🖼 Frames <b>${s.total_frames}</b></div>
+  <div class="stat">📝 Captions <b>${s.caption_coverage}</b></div>
+`;
+
+/* ---- Video Gallery ---- */
+function renderVideos() {
+  const list = MANIFEST.videos.filter(v => {
+    if (videoFilter && v.video_id !== videoFilter) return false;
+    if (query && !(v.video_id + " " + (v.title||"")).toLowerCase().includes(query)) return false;
+    return true;
+  });
+
+  const grid = document.createElement("div");
+  grid.className = "gallery";
+  if (!list.length) { grid.innerHTML = '<div class="empty">該当なし</div>'; }
+
+  for (const v of list) {
+    const card = document.createElement("article");
+    card.className = "vcard";
+    const thumb = v.frames.entries[0] ? `../${v.frames.entries[0].path}` : "";
+    const statusClass = v.permission_status === "approved" ? "approved" : (v.permission_status === "pending" ? "pending" : "error");
+    card.innerHTML = `
+      <div class="vthumb"><img loading="lazy" src="${esc(thumb)}" alt="" onerror="this.style.opacity=0.3"></div>
+      <div class="vinfo">
+        <div class="vtitle">${esc(v.title || v.video_id)}</div>
+        <div class="vmeta">
+          <span class="badge ${statusClass}">${esc(v.permission_status)}</span>
+          <span>🖼 ${v.frames.count||0} frames</span>
+          <span>${fmtBytes(v.local_video.size_bytes)}</span>
+        </div>
+        <div class="vmeta" style="margin-top:2px;">
+          <span>ID: ${esc(v.video_id)}</span>
+          <a href="${esc(v.source_url||"#")}" target="_blank" rel="noreferrer" style="color:var(--info);">YouTube</a>
+        </div>
+        <div class="vactions">
+          <button onclick="showVideoFrames('${esc(v.video_id)}')">🖼 フレーム表示</button>
+          <button onclick="showVideoPath('${esc(v.video_id)}')">📂 動画パス</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  }
+  return grid;
+}
+
+function showVideoFrames(vid) { videoFilter=vid; view="frames"; page=1; sel.value=vid; updateViewButtons(); render(); }
+function showVideoPath(vid) { const v=videoMap[vid]; if(!v)return; alert("Local video:\n" + (v.local_video.path||"N/A")); }
+
+/* ---- Frame Grid ---- */
+function renderFrames() {
+  let list = allFrames.filter(f => {
+    if (videoFilter && f.video_id !== videoFilter) return false;
+    if (onlyWithCaptions && !f.has_caption) return false;
+    if (query && !(f.filename + " " + f.video_id + " " + (f.caption_text||"")).toLowerCase().includes(query)) return false;
+    return true;
+  });
+
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (page > totalPages) page = totalPages;
+  const start = (page - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  list = list.slice(start, end);
+
+  const wrap = document.createElement("div");
+  const grid = document.createElement("div");
+  grid.className = "fgrid";
+
+  if (!list.length) { grid.innerHTML = '<div class="empty">該当なし</div>'; }
+  for (const f of list) {
+    // Load caption text if available
+    const capText = ""; // captions loaded on demand or embedded if small
+    const card = document.createElement("div");
+    card.className = "fcard";
+    card.innerHTML = `
+      <img loading="lazy" src="../${esc(f.path)}" alt="" onclick="openOverlay('../${esc(f.path)}','${esc(f.video_id)} ${esc(f.filename)}')" style="cursor:zoom-in;">
+      <div class="fmeta">
+        <div>${esc(f.video_id)} #${String(f.index).padStart(6,"0")}</div>
+        ${f.has_caption ? `<div class="fcap">📝 ${esc(f.caption_path)}</div>` : ""}
+      </div>`;
+    grid.appendChild(card);
+  }
+  wrap.appendChild(grid);
+
+  // Pager
+  if (total > PAGE_SIZE) {
+    const pager = document.createElement("div");
+    pager.className = "pager";
+    const prevBtn = document.createElement("button"); prevBtn.textContent = "←"; prevBtn.disabled = page<=1; prevBtn.onclick=()=>{page--;render();};
+    const nextBtn = document.createElement("button"); nextBtn.textContent = "→"; nextBtn.disabled = page>=totalPages; nextBtn.onclick=()=>{page++;render();};
+    const info = document.createElement("span"); info.textContent = `${page} / ${totalPages} (${total} frames)`;
+    pager.appendChild(prevBtn); pager.appendChild(info); pager.appendChild(nextBtn);
+    wrap.appendChild(pager);
+  }
+
+  document.getElementById("shown").textContent = `${total} frames`;
+  return wrap;
+}
+
+/* ---- Dataset Table ---- */
+function renderDataset() {
+  let list = allFrames.filter(f => {
+    if (videoFilter && f.video_id !== videoFilter) return false;
+    if (onlyWithCaptions && !f.has_caption) return false;
+    if (query && !(f.filename + " " + f.video_id).toLowerCase().includes(query)) return false;
+    return true;
+  });
+
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (page > totalPages) page = totalPages;
+  const start = (page - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  const pageList = list.slice(start, end);
+
+  const wrap = document.createElement("div");
+  const table = document.createElement("table");
+  table.className = "dtable";
+  table.innerHTML = `<thead><tr>
+    <th>#</th><th>Image</th><th>Video</th><th>Frame</th><th>Caption</th><th>Path</th>
+  </tr></thead><tbody></tbody>`;
+  const tbody = table.querySelector("tbody");
+
+  if (!pageList.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">該当なし</td></tr>';
+  } else {
+    for (const f of pageList) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${f.index}</td>
+        <td><img src="../${esc(f.path)}" loading="lazy" onclick="openOverlay('../${esc(f.path)}','${esc(f.video_id)} ${esc(f.filename)}')"></td>
+        <td>${esc(f.video_id)}</td>
+        <td>${esc(f.filename)}</td>
+        <td>${f.has_caption ? esc(f.caption_path) : "—"}</td>
+        <td><code style="font-size:10px;">${esc(f.path)}</code></td>`;
+      tbody.appendChild(tr);
+    }
+  }
+  wrap.appendChild(table);
+
+  if (total > PAGE_SIZE) {
+    const pager = document.createElement("div");
+    pager.className = "pager";
+    const prev = document.createElement("button"); prev.textContent="←"; prev.disabled=page<=1; prev.onclick=()=>{page--;render();};
+    const next = document.createElement("button"); next.textContent="→"; next.disabled=page>=totalPages; next.onclick=()=>{page++;render();};
+    const info = document.createElement("span"); info.textContent=`${page} / ${totalPages} (${total} rows)`;
+    pager.appendChild(prev); pager.appendChild(info); pager.appendChild(next);
+    wrap.appendChild(pager);
+  }
+
+  document.getElementById("shown").textContent = `${total} rows`;
+  return wrap;
+}
+
+/* ---- Overlay ---- */
+function openOverlay(src, caption) {
+  document.getElementById("oimg").src = src;
+  document.getElementById("ocap").textContent = caption;
+  document.getElementById("overlay").classList.add("active");
+}
+function closeOverlay() { document.getElementById("overlay").classList.remove("active"); }
+
+/* ---- Render dispatcher ---- */
+function render() {
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  if (view === "videos") {
+    main.appendChild(renderVideos());
+    document.getElementById("shown").textContent = MANIFEST.videos.length + " videos";
+  } else if (view === "frames") {
+    main.appendChild(renderFrames());
+  } else if (view === "dataset") {
+    main.appendChild(renderDataset());
+  }
+}
+
+function updateViewButtons() {
+  document.querySelectorAll("[data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+}
+
+/* ---- Event bindings ---- */
+for (const b of document.querySelectorAll("[data-view]")) {
+  b.addEventListener("click", () => {
+    view = b.dataset.view; page = 1; updateViewButtons(); render();
+  });
+}
+
+document.getElementById("q").addEventListener("input", e => {
+  query = e.target.value.trim().toLowerCase(); page = 1; render();
+});
+
+document.getElementById("videoFilter").addEventListener("change", e => {
+  videoFilter = e.target.value; page = 1; render();
+});
+
+document.getElementById("onlyWithCaptions").addEventListener("change", e => {
+  onlyWithCaptions = e.target.checked; page = 1; render();
+});
+
+// Close overlay on backdrop click
+if(document.getElementById("overlay")){
+  document.getElementById("overlay").addEventListener("click", e => {
+    if (e.target.id === "overlay") closeOverlay();
+  });
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1169 @@
+{
+  "generated_at": "2026-10-27T03:30:43.462555+00:00",
+  "generator": "build_shishi_manifest.py",
+  "videos": [
+    {
+      "video_id": "QJ9LvngEepg",
+      "title": "ShiShi Yamazaki Reel 2021",
+      "source_url": "https://www.youtube.com/watch?v=QJ9LvngEepg",
+      "permission_status": "approved",
+      "rights_basis": "platform_license",
+      "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ",
+      "local_video": {
+        "path": "local-videos/QJ9LvngEepg/QJ9LvngEepg.mp4",
+        "exists": true,
+        "size_bytes": 21398778
+      },
+      "frames": {
+        "count": 63,
+        "first": "QJ9LvngEepg_000068.png",
+        "last": "QJ9LvngEepg_000130.png",
+        "caption_coverage": "63/63",
+        "entries": [
+          {
+            "filename": "QJ9LvngEepg_000068.png",
+            "path": "images-shishi/QJ9LvngEepg_000068.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000068.txt",
+            "index": 68,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000069.png",
+            "path": "images-shishi/QJ9LvngEepg_000069.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000069.txt",
+            "index": 69,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000070.png",
+            "path": "images-shishi/QJ9LvngEepg_000070.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000070.txt",
+            "index": 70,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000071.png",
+            "path": "images-shishi/QJ9LvngEepg_000071.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000071.txt",
+            "index": 71,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000072.png",
+            "path": "images-shishi/QJ9LvngEepg_000072.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000072.txt",
+            "index": 72,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000073.png",
+            "path": "images-shishi/QJ9LvngEepg_000073.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000073.txt",
+            "index": 73,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000074.png",
+            "path": "images-shishi/QJ9LvngEepg_000074.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000074.txt",
+            "index": 74,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000075.png",
+            "path": "images-shishi/QJ9LvngEepg_000075.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000075.txt",
+            "index": 75,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000076.png",
+            "path": "images-shishi/QJ9LvngEepg_000076.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000076.txt",
+            "index": 76,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000077.png",
+            "path": "images-shishi/QJ9LvngEepg_000077.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000077.txt",
+            "index": 77,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000078.png",
+            "path": "images-shishi/QJ9LvngEepg_000078.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000078.txt",
+            "index": 78,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000079.png",
+            "path": "images-shishi/QJ9LvngEepg_000079.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000079.txt",
+            "index": 79,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000080.png",
+            "path": "images-shishi/QJ9LvngEepg_000080.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000080.txt",
+            "index": 80,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000081.png",
+            "path": "images-shishi/QJ9LvngEepg_000081.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000081.txt",
+            "index": 81,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000082.png",
+            "path": "images-shishi/QJ9LvngEepg_000082.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000082.txt",
+            "index": 82,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000083.png",
+            "path": "images-shishi/QJ9LvngEepg_000083.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000083.txt",
+            "index": 83,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000084.png",
+            "path": "images-shishi/QJ9LvngEepg_000084.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000084.txt",
+            "index": 84,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000085.png",
+            "path": "images-shishi/QJ9LvngEepg_000085.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000085.txt",
+            "index": 85,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000086.png",
+            "path": "images-shishi/QJ9LvngEepg_000086.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000086.txt",
+            "index": 86,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000087.png",
+            "path": "images-shishi/QJ9LvngEepg_000087.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000087.txt",
+            "index": 87,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000088.png",
+            "path": "images-shishi/QJ9LvngEepg_000088.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000088.txt",
+            "index": 88,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000089.png",
+            "path": "images-shishi/QJ9LvngEepg_000089.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000089.txt",
+            "index": 89,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000090.png",
+            "path": "images-shishi/QJ9LvngEepg_000090.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000090.txt",
+            "index": 90,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000091.png",
+            "path": "images-shishi/QJ9LvngEepg_000091.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000091.txt",
+            "index": 91,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000092.png",
+            "path": "images-shishi/QJ9LvngEepg_000092.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000092.txt",
+            "index": 92,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000093.png",
+            "path": "images-shishi/QJ9LvngEepg_000093.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000093.txt",
+            "index": 93,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000094.png",
+            "path": "images-shishi/QJ9LvngEepg_000094.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000094.txt",
+            "index": 94,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000095.png",
+            "path": "images-shishi/QJ9LvngEepg_000095.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000095.txt",
+            "index": 95,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000096.png",
+            "path": "images-shishi/QJ9LvngEepg_000096.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000096.txt",
+            "index": 96,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000097.png",
+            "path": "images-shishi/QJ9LvngEepg_000097.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000097.txt",
+            "index": 97,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000098.png",
+            "path": "images-shishi/QJ9LvngEepg_000098.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000098.txt",
+            "index": 98,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000099.png",
+            "path": "images-shishi/QJ9LvngEepg_000099.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000099.txt",
+            "index": 99,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000100.png",
+            "path": "images-shishi/QJ9LvngEepg_000100.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000100.txt",
+            "index": 100,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000101.png",
+            "path": "images-shishi/QJ9LvngEepg_000101.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000101.txt",
+            "index": 101,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000102.png",
+            "path": "images-shishi/QJ9LvngEepg_000102.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000102.txt",
+            "index": 102,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000103.png",
+            "path": "images-shishi/QJ9LvngEepg_000103.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000103.txt",
+            "index": 103,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000104.png",
+            "path": "images-shishi/QJ9LvngEepg_000104.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000104.txt",
+            "index": 104,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000105.png",
+            "path": "images-shishi/QJ9LvngEepg_000105.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000105.txt",
+            "index": 105,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000106.png",
+            "path": "images-shishi/QJ9LvngEepg_000106.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000106.txt",
+            "index": 106,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000107.png",
+            "path": "images-shishi/QJ9LvngEepg_000107.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000107.txt",
+            "index": 107,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000108.png",
+            "path": "images-shishi/QJ9LvngEepg_000108.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000108.txt",
+            "index": 108,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000109.png",
+            "path": "images-shishi/QJ9LvngEepg_000109.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000109.txt",
+            "index": 109,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000110.png",
+            "path": "images-shishi/QJ9LvngEepg_000110.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000110.txt",
+            "index": 110,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000111.png",
+            "path": "images-shishi/QJ9LvngEepg_000111.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000111.txt",
+            "index": 111,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000112.png",
+            "path": "images-shishi/QJ9LvngEepg_000112.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000112.txt",
+            "index": 112,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000113.png",
+            "path": "images-shishi/QJ9LvngEepg_000113.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000113.txt",
+            "index": 113,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000114.png",
+            "path": "images-shishi/QJ9LvngEepg_000114.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000114.txt",
+            "index": 114,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000115.png",
+            "path": "images-shishi/QJ9LvngEepg_000115.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000115.txt",
+            "index": 115,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000116.png",
+            "path": "images-shishi/QJ9LvngEepg_000116.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000116.txt",
+            "index": 116,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000117.png",
+            "path": "images-shishi/QJ9LvngEepg_000117.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000117.txt",
+            "index": 117,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000118.png",
+            "path": "images-shishi/QJ9LvngEepg_000118.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000118.txt",
+            "index": 118,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000119.png",
+            "path": "images-shishi/QJ9LvngEepg_000119.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000119.txt",
+            "index": 119,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000120.png",
+            "path": "images-shishi/QJ9LvngEepg_000120.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000120.txt",
+            "index": 120,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000121.png",
+            "path": "images-shishi/QJ9LvngEepg_000121.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000121.txt",
+            "index": 121,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000122.png",
+            "path": "images-shishi/QJ9LvngEepg_000122.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000122.txt",
+            "index": 122,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000123.png",
+            "path": "images-shishi/QJ9LvngEepg_000123.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000123.txt",
+            "index": 123,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000124.png",
+            "path": "images-shishi/QJ9LvngEepg_000124.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000124.txt",
+            "index": 124,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000125.png",
+            "path": "images-shishi/QJ9LvngEepg_000125.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000125.txt",
+            "index": 125,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000126.png",
+            "path": "images-shishi/QJ9LvngEepg_000126.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000126.txt",
+            "index": 126,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000127.png",
+            "path": "images-shishi/QJ9LvngEepg_000127.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000127.txt",
+            "index": 127,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000128.png",
+            "path": "images-shishi/QJ9LvngEepg_000128.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000128.txt",
+            "index": 128,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000129.png",
+            "path": "images-shishi/QJ9LvngEepg_000129.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000129.txt",
+            "index": 129,
+            "has_caption": true
+          },
+          {
+            "filename": "QJ9LvngEepg_000130.png",
+            "path": "images-shishi/QJ9LvngEepg_000130.png",
+            "caption_path": "images-shishi/QJ9LvngEepg_000130.txt",
+            "index": 130,
+            "has_caption": true
+          }
+        ]
+      }
+    },
+    {
+      "video_id": "TdWDZyf8vns",
+      "title": "Bloom YAMAZAKI",
+      "source_url": "https://www.youtube.com/watch?v=TdWDZyf8vns",
+      "permission_status": "approved",
+      "rights_basis": "platform_license",
+      "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ",
+      "local_video": {
+        "path": "local-videos/TdWDZyf8vns/TdWDZyf8vns.mp4",
+        "exists": true,
+        "size_bytes": 8754052
+      },
+      "frames": {
+        "count": 16,
+        "first": "TdWDZyf8vns_000052.png",
+        "last": "TdWDZyf8vns_000067.png",
+        "caption_coverage": "16/16",
+        "entries": [
+          {
+            "filename": "TdWDZyf8vns_000052.png",
+            "path": "images-shishi/TdWDZyf8vns_000052.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000052.txt",
+            "index": 52,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000053.png",
+            "path": "images-shishi/TdWDZyf8vns_000053.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000053.txt",
+            "index": 53,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000054.png",
+            "path": "images-shishi/TdWDZyf8vns_000054.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000054.txt",
+            "index": 54,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000055.png",
+            "path": "images-shishi/TdWDZyf8vns_000055.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000055.txt",
+            "index": 55,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000056.png",
+            "path": "images-shishi/TdWDZyf8vns_000056.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000056.txt",
+            "index": 56,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000057.png",
+            "path": "images-shishi/TdWDZyf8vns_000057.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000057.txt",
+            "index": 57,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000058.png",
+            "path": "images-shishi/TdWDZyf8vns_000058.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000058.txt",
+            "index": 58,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000059.png",
+            "path": "images-shishi/TdWDZyf8vns_000059.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000059.txt",
+            "index": 59,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000060.png",
+            "path": "images-shishi/TdWDZyf8vns_000060.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000060.txt",
+            "index": 60,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000061.png",
+            "path": "images-shishi/TdWDZyf8vns_000061.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000061.txt",
+            "index": 61,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000062.png",
+            "path": "images-shishi/TdWDZyf8vns_000062.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000062.txt",
+            "index": 62,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000063.png",
+            "path": "images-shishi/TdWDZyf8vns_000063.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000063.txt",
+            "index": 63,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000064.png",
+            "path": "images-shishi/TdWDZyf8vns_000064.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000064.txt",
+            "index": 64,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000065.png",
+            "path": "images-shishi/TdWDZyf8vns_000065.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000065.txt",
+            "index": 65,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000066.png",
+            "path": "images-shishi/TdWDZyf8vns_000066.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000066.txt",
+            "index": 66,
+            "has_caption": true
+          },
+          {
+            "filename": "TdWDZyf8vns_000067.png",
+            "path": "images-shishi/TdWDZyf8vns_000067.png",
+            "caption_path": "images-shishi/TdWDZyf8vns_000067.txt",
+            "index": 67,
+            "has_caption": true
+          }
+        ]
+      }
+    },
+    {
+      "video_id": "TfmHub8uQcM",
+      "title": "フクオカカウントダウン2020-2021",
+      "source_url": "https://www.youtube.com/watch?v=TfmHub8uQcM",
+      "permission_status": "approved",
+      "rights_basis": "platform_license",
+      "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ",
+      "local_video": {
+        "path": "local-videos/TfmHub8uQcM/TfmHub8uQcM.mp4",
+        "exists": true,
+        "size_bytes": 4831453
+      },
+      "frames": {
+        "count": 13,
+        "first": "TfmHub8uQcM_000131.png",
+        "last": "TfmHub8uQcM_000143.png",
+        "caption_coverage": "13/13",
+        "entries": [
+          {
+            "filename": "TfmHub8uQcM_000131.png",
+            "path": "images-shishi/TfmHub8uQcM_000131.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000131.txt",
+            "index": 131,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000132.png",
+            "path": "images-shishi/TfmHub8uQcM_000132.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000132.txt",
+            "index": 132,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000133.png",
+            "path": "images-shishi/TfmHub8uQcM_000133.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000133.txt",
+            "index": 133,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000134.png",
+            "path": "images-shishi/TfmHub8uQcM_000134.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000134.txt",
+            "index": 134,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000135.png",
+            "path": "images-shishi/TfmHub8uQcM_000135.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000135.txt",
+            "index": 135,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000136.png",
+            "path": "images-shishi/TfmHub8uQcM_000136.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000136.txt",
+            "index": 136,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000137.png",
+            "path": "images-shishi/TfmHub8uQcM_000137.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000137.txt",
+            "index": 137,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000138.png",
+            "path": "images-shishi/TfmHub8uQcM_000138.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000138.txt",
+            "index": 138,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000139.png",
+            "path": "images-shishi/TfmHub8uQcM_000139.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000139.txt",
+            "index": 139,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000140.png",
+            "path": "images-shishi/TfmHub8uQcM_000140.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000140.txt",
+            "index": 140,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000141.png",
+            "path": "images-shishi/TfmHub8uQcM_000141.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000141.txt",
+            "index": 141,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000142.png",
+            "path": "images-shishi/TfmHub8uQcM_000142.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000142.txt",
+            "index": 142,
+            "has_caption": true
+          },
+          {
+            "filename": "TfmHub8uQcM_000143.png",
+            "path": "images-shishi/TfmHub8uQcM_000143.png",
+            "caption_path": "images-shishi/TfmHub8uQcM_000143.txt",
+            "index": 143,
+            "has_caption": true
+          }
+        ]
+      }
+    },
+    {
+      "video_id": "gsQuyDa8Kgk",
+      "title": "L'OFFICIEL UKRAINE Special Art Cover",
+      "source_url": "https://www.youtube.com/watch?v=gsQuyDa8Kgk",
+      "permission_status": "approved",
+      "rights_basis": "platform_license",
+      "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ",
+      "local_video": {
+        "path": "local-videos/gsQuyDa8Kgk/gsQuyDa8Kgk.mp4",
+        "exists": true,
+        "size_bytes": 2970318
+      },
+      "frames": {
+        "count": 11,
+        "first": "gsQuyDa8Kgk_000000.png",
+        "last": "gsQuyDa8Kgk_000010.png",
+        "caption_coverage": "11/11",
+        "entries": [
+          {
+            "filename": "gsQuyDa8Kgk_000000.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000000.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000000.txt",
+            "index": 0,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000001.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000001.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000001.txt",
+            "index": 1,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000002.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000002.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000002.txt",
+            "index": 2,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000003.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000003.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000003.txt",
+            "index": 3,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000004.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000004.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000004.txt",
+            "index": 4,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000005.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000005.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000005.txt",
+            "index": 5,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000006.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000006.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000006.txt",
+            "index": 6,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000007.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000007.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000007.txt",
+            "index": 7,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000008.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000008.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000008.txt",
+            "index": 8,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000009.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000009.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000009.txt",
+            "index": 9,
+            "has_caption": true
+          },
+          {
+            "filename": "gsQuyDa8Kgk_000010.png",
+            "path": "images-shishi/gsQuyDa8Kgk_000010.png",
+            "caption_path": "images-shishi/gsQuyDa8Kgk_000010.txt",
+            "index": 10,
+            "has_caption": true
+          }
+        ]
+      }
+    },
+    {
+      "video_id": "h3s-jeOohW0",
+      "title": "New Chitose Airport PR Clip",
+      "source_url": "https://www.youtube.com/watch?v=h3s-jeOohW0",
+      "permission_status": "approved",
+      "rights_basis": "platform_license",
+      "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ",
+      "local_video": {
+        "path": "local-videos/h3s-jeOohW0/h3s-jeOohW0.mp4",
+        "exists": true,
+        "size_bytes": 4764966
+      },
+      "frames": {
+        "count": 25,
+        "first": "h3s-jeOohW0_000027.png",
+        "last": "h3s-jeOohW0_000051.png",
+        "caption_coverage": "25/25",
+        "entries": [
+          {
+            "filename": "h3s-jeOohW0_000027.png",
+            "path": "images-shishi/h3s-jeOohW0_000027.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000027.txt",
+            "index": 27,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000028.png",
+            "path": "images-shishi/h3s-jeOohW0_000028.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000028.txt",
+            "index": 28,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000029.png",
+            "path": "images-shishi/h3s-jeOohW0_000029.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000029.txt",
+            "index": 29,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000030.png",
+            "path": "images-shishi/h3s-jeOohW0_000030.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000030.txt",
+            "index": 30,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000031.png",
+            "path": "images-shishi/h3s-jeOohW0_000031.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000031.txt",
+            "index": 31,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000032.png",
+            "path": "images-shishi/h3s-jeOohW0_000032.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000032.txt",
+            "index": 32,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000033.png",
+            "path": "images-shishi/h3s-jeOohW0_000033.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000033.txt",
+            "index": 33,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000034.png",
+            "path": "images-shishi/h3s-jeOohW0_000034.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000034.txt",
+            "index": 34,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000035.png",
+            "path": "images-shishi/h3s-jeOohW0_000035.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000035.txt",
+            "index": 35,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000036.png",
+            "path": "images-shishi/h3s-jeOohW0_000036.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000036.txt",
+            "index": 36,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000037.png",
+            "path": "images-shishi/h3s-jeOohW0_000037.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000037.txt",
+            "index": 37,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000038.png",
+            "path": "images-shishi/h3s-jeOohW0_000038.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000038.txt",
+            "index": 38,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000039.png",
+            "path": "images-shishi/h3s-jeOohW0_000039.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000039.txt",
+            "index": 39,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000040.png",
+            "path": "images-shishi/h3s-jeOohW0_000040.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000040.txt",
+            "index": 40,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000041.png",
+            "path": "images-shishi/h3s-jeOohW0_000041.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000041.txt",
+            "index": 41,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000042.png",
+            "path": "images-shishi/h3s-jeOohW0_000042.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000042.txt",
+            "index": 42,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000043.png",
+            "path": "images-shishi/h3s-jeOohW0_000043.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000043.txt",
+            "index": 43,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000044.png",
+            "path": "images-shishi/h3s-jeOohW0_000044.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000044.txt",
+            "index": 44,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000045.png",
+            "path": "images-shishi/h3s-jeOohW0_000045.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000045.txt",
+            "index": 45,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000046.png",
+            "path": "images-shishi/h3s-jeOohW0_000046.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000046.txt",
+            "index": 46,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000047.png",
+            "path": "images-shishi/h3s-jeOohW0_000047.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000047.txt",
+            "index": 47,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000048.png",
+            "path": "images-shishi/h3s-jeOohW0_000048.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000048.txt",
+            "index": 48,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000049.png",
+            "path": "images-shishi/h3s-jeOohW0_000049.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000049.txt",
+            "index": 49,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000050.png",
+            "path": "images-shishi/h3s-jeOohW0_000050.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000050.txt",
+            "index": 50,
+            "has_caption": true
+          },
+          {
+            "filename": "h3s-jeOohW0_000051.png",
+            "path": "images-shishi/h3s-jeOohW0_000051.png",
+            "caption_path": "images-shishi/h3s-jeOohW0_000051.txt",
+            "index": 51,
+            "has_caption": true
+          }
+        ]
+      }
+    },
+    {
+      "video_id": "tMXLq461Yjg",
+      "title": "EST PINK BARGAIN 2017 Bargain",
+      "source_url": "https://www.youtube.com/watch?v=tMXLq461Yjg",
+      "permission_status": "approved",
+      "rights_basis": "platform_license",
+      "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ",
+      "local_video": {
+        "path": "local-videos/tMXLq461Yjg/tMXLq461Yjg.mp4",
+        "exists": true,
+        "size_bytes": 4165834
+      },
+      "frames": {
+        "count": 2,
+        "first": "tMXLq461Yjg_000025.png",
+        "last": "tMXLq461Yjg_000026.png",
+        "caption_coverage": "2/2",
+        "entries": [
+          {
+            "filename": "tMXLq461Yjg_000025.png",
+            "path": "images-shishi/tMXLq461Yjg_000025.png",
+            "caption_path": "images-shishi/tMXLq461Yjg_000025.txt",
+            "index": 25,
+            "has_caption": true
+          },
+          {
+            "filename": "tMXLq461Yjg_000026.png",
+            "path": "images-shishi/tMXLq461Yjg_000026.png",
+            "caption_path": "images-shishi/tMXLq461Yjg_000026.txt",
+            "index": 26,
+            "has_caption": true
+          }
+        ]
+      }
+    },
+    {
+      "video_id": "tVTix8rxwgM",
+      "title": "EST PINK BARGAIN 2017 Lucky Bag",
+      "source_url": "https://www.youtube.com/watch?v=tVTix8rxwgM",
+      "permission_status": "approved",
+      "rights_basis": "platform_license",
+      "creator_or_rights_holder": "ShiShi Yamazaki / ヤマザキシシ",
+      "local_video": {
+        "path": "local-videos/tVTix8rxwgM/tVTix8rxwgM.mp4",
+        "exists": true,
+        "size_bytes": 4094145
+      },
+      "frames": {
+        "count": 14,
+        "first": "tVTix8rxwgM_000011.png",
+        "last": "tVTix8rxwgM_000024.png",
+        "caption_coverage": "14/14",
+        "entries": [
+          {
+            "filename": "tVTix8rxwgM_000011.png",
+            "path": "images-shishi/tVTix8rxwgM_000011.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000011.txt",
+            "index": 11,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000012.png",
+            "path": "images-shishi/tVTix8rxwgM_000012.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000012.txt",
+            "index": 12,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000013.png",
+            "path": "images-shishi/tVTix8rxwgM_000013.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000013.txt",
+            "index": 13,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000014.png",
+            "path": "images-shishi/tVTix8rxwgM_000014.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000014.txt",
+            "index": 14,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000015.png",
+            "path": "images-shishi/tVTix8rxwgM_000015.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000015.txt",
+            "index": 15,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000016.png",
+            "path": "images-shishi/tVTix8rxwgM_000016.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000016.txt",
+            "index": 16,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000017.png",
+            "path": "images-shishi/tVTix8rxwgM_000017.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000017.txt",
+            "index": 17,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000018.png",
+            "path": "images-shishi/tVTix8rxwgM_000018.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000018.txt",
+            "index": 18,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000019.png",
+            "path": "images-shishi/tVTix8rxwgM_000019.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000019.txt",
+            "index": 19,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000020.png",
+            "path": "images-shishi/tVTix8rxwgM_000020.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000020.txt",
+            "index": 20,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000021.png",
+            "path": "images-shishi/tVTix8rxwgM_000021.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000021.txt",
+            "index": 21,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000022.png",
+            "path": "images-shishi/tVTix8rxwgM_000022.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000022.txt",
+            "index": 22,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000023.png",
+            "path": "images-shishi/tVTix8rxwgM_000023.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000023.txt",
+            "index": 23,
+            "has_caption": true
+          },
+          {
+            "filename": "tVTix8rxwgM_000024.png",
+            "path": "images-shishi/tVTix8rxwgM_000024.png",
+            "caption_path": "images-shishi/tVTix8rxwgM_000024.txt",
+            "index": 24,
+            "has_caption": true
+          }
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "total_videos_with_frames": 7,
+    "total_videos_approved": 7,
+    "total_videos_downloaded": 7,
+    "total_frames": 144,
+    "total_captions": 144,
+    "caption_coverage": "144/144"
+  }
+}
