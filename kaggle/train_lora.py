@@ -24,7 +24,9 @@ import time
 import traceback
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
+# Kaggle wraps script kernels in notebooks where __file__ is not defined.
+_SCRIPT_PATH = globals().get("__file__")
+HERE = Path(_SCRIPT_PATH).resolve().parent if _SCRIPT_PATH else Path("/kaggle/working")
 WORK = Path("/kaggle/working") if Path("/kaggle/working").is_dir() else Path.cwd()
 INPUT_ROOT = Path("/kaggle/input")
 TRAIN_ROOT = Path("/kaggle/temp/train")
