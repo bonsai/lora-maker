@@ -106,9 +106,12 @@ def write_dataset_config(path: Path | None = None) -> Path:
     if path is not None:
         target = path
     else:
-        target = _search("dataset.toml")
-        if target is None:
-            target = HERE / "dataset.toml"
+        # Kaggle /kaggle/src is read-only; always write to /kaggle/working
+        target = WORK / "dataset.toml"
+        if not target.is_file():
+            existing = _search("dataset.toml")
+            if existing is not None:
+                target = existing
     if "__DATASET_TOML__" not in EMBEDDED_DATASET_TOML:
         target.write_text(EMBEDDED_DATASET_TOML, encoding="utf-8")
         origin = "embedded"
