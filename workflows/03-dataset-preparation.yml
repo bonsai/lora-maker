@@ -33,7 +33,7 @@ upstream:
   require_video_selection_approval: true
 
 inputs:
-  selected_manifest: selected-videos.yml
+  selected_manifest: data/shishi/selected-videos.yml
   source_type: local_file
   target_video_count: 7
   allow_count_change_with_approval: true
